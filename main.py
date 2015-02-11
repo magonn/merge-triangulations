@@ -1,4 +1,3 @@
-from Tkinter import *
 from triangulationClass import *
 
 app = triangulationClass(600, 400)
