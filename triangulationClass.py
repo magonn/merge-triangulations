@@ -9,14 +9,15 @@ import numpy as np
 class triangulationClass() :
     root = Tk()
     
-    trianglationDone = False
-    firstTriangle = True
+    startTriDone = False
+    checkTriDone = False
+    firstTri = True
 
-    points = [[], []]
-    faces = [[], []]
+    points = [[], [], []]
+    faces = [[], [], []]
     tree = [[], []]
 
-    color = ["#FFCC66", "#0099FF"]
+    color = ["#FFCC66", "#0099FF", "#00CC33"]
     colorMST = ["#FF6600", "#000099"]
     
     def __init__(self, _width = 600, _height = 400) :
@@ -45,7 +46,7 @@ class triangulationClass() :
         
         
     def clickMouse(self, event) :
-        if self.trianglationDone == False :
+        if self.startTriDone == False :
             getX = event.x_root
             getY = event.y_root
 
@@ -55,41 +56,55 @@ class triangulationClass() :
             x = getX - posRootX
             y = getY - posRootY
 
-            self.points[self.firstTriangle == False].append([x, y])
+            p = [x, y]
+            self.points[self.firstTri == False].append(p)
             
-            self.drawPoint(x, y)
+            self.drawPoint(p, self.color[self.firstTri == False])
     
     def secondTriangle(self) :
-        self.firstTriangle = False
+        self.firstTri = False
 
-    def drawPoint(self, x, y) :
-        rad = 2
-        if self.trianglationDone == False :
-            c = self.color[self.firstTriangle == False]
-            circle = self.canvas.create_oval(x - rad, y - rad, x + rad, y + rad, fill = c, outline = c)
+    def drawPoint(self, p, col) :
+        rad = 4
+        if self.startTriDone == False :
+            circle = self.canvas.create_oval(p[0] - rad, p[1] - rad, p[0] + rad, p[1] + rad, fill = col, outline = col)
             
-    def drawTriangle(self, num) :
-        for i in range(len(self.faces[num])) :
-            f = self.faces[num][i]
-            temp = [self.points[num][f[0]], self.points[num][f[1]], self.points[num][f[2]], self.points[num][f[0]]]
+    def drawEdge(self, p1, p2, col) :
+        line = self.canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill = col, width = 1)
+
+    def drawTriangle(self, points, faces, col, wid = 1) :
+        for f in faces :
+            temp = [points[f[0]], points[f[1]], points[f[2]], points[f[0]]]
             
             for j in range(3) :
-                line = self.canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = self.color[num])
+                line = self.canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = col, width = wid)
 
     def makeTriangle(self) :
-        if self.trianglationDone == False :
-            self.trianglationDone = True
+        if self.startTriDone == False :
+            self.startTriDone = True
             
             for i in range(2) :
                 self.points[i].pop(len(self.points[i]) - 1)
                 
                 tri = Delaunay(self.points[i])
+                
+                self.faces[i].extend(tri.vertices)
 
-                for f in tri.vertices :
-                    self.faces[i].append([f[0], f[1], f[2]])
+                self.drawTriangle(self.points[i], self.faces[i], self.color[i])
 
-                self.drawTriangle(i)
+        if self.checkTriDone == False :
+            self.checkTriDone = True
+
+            self.points[2].extend(self.points[0])
+            self.points[2].extend(self.points[1])
             
+            tri = Delaunay(self.points[2])
+            self.faces[2].extend(tri.vertices)
+
+            self.drawTriangle(self.points[2], self.faces[2], self.color[2], 3)
+
+        self.makeConcatenation()
+
     def drawTree(self) :
         for i in range(2) :
             for j in range(len(self.tree[i])) :
@@ -136,11 +151,40 @@ class triangulationClass() :
 
         self.drawTree()
 
+    def findFirstStarter(self) :
+        starter = [0, 0]
+        for i in range(2) :
+            for j in range(len(self.points[i])) :
+                p = self.points[i][j]
+                tempStarter = self.points[i][starter[i]]
+                if (p[0] < tempStarter[0]) or (p[0] == tempStarter[0] and p[1] > tempStarter[1]) :
+                    starter[i] = j
+        
+        pStarter = [self.points[0][starter[0]], self.points[1][starter[1]]]
+        fixPoint = (pStarter[0][0] < pStarter[1][0]) or (pStarter[0][0] == pStarter[1][0] and (pStarter[0][1] > pStarter[1][1]))
+
+        circle = self.canvas.create_oval(pStarter[fixPoint][0] - 3, pStarter[fixPoint][1] - 3, pStarter[fixPoint][0] + 3, pStarter[fixPoint][1] + 3, fill = "red", outline = "red")
+        
+        minLength = self.getLength(pStarter[0], pStarter[1])
+        for j in range(len(self.points[1 - fixPoint])) :
+            length = self.getLength(pStarter[fixPoint], self.points[1 - fixPoint][j])
+            if length < minLength :
+                minLength = length
+                starter[1 - fixPoint] = j
+                pStarter[1 - fixPoint] = self.points[1 - fixPoint][j]
+
+        return starter, pStarter
+
+    def makeConcatenation(self) :
+        starter, pStarter = self.findFirstStarter()
+        self.drawEdge(pStarter[0], pStarter[1], "red")
+
     def experiment(self) :
-        self.trianglationDone = False
-        self.firstTriangle = True
-        self.points = [[], []]
-        self.faces = [[], []]
+        self.startTriDone = False
+        self.checkTriDone = False
+        self.firstTri = True
+        self.points = [[], [], []]
+        self.faces = [[], [], []]
         self.canvas.delete("all")
 
         nPoints = [10, 10]
@@ -150,10 +194,12 @@ class triangulationClass() :
             self.points[i] = np.concatenate((x, y), axis = 1)
 
             for j in range(len(self.points[i]) - 1) :
-                self.drawPoint(self.points[i][j][0], self.points[i][j][1])
+                self.drawPoint(self.points[i][j], self.color[i])
 
-            self.firstTriangle = False
+            self.secondTriangle()
 
         self.points[0] = self.points[0].tolist()
         self.points[1] = self.points[1].tolist()
-        self.makeMST()
+        self.makeTriangle()
+        #self.makeMST()
+        self.makeConcatenation()
