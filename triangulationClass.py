@@ -9,6 +9,8 @@ import numpy as np
 import Queue
 import copy
 
+EPS = 1e-4
+
 class triangulationClass() :
     root = Tk()
     
@@ -21,7 +23,7 @@ class triangulationClass() :
     neighFaces = [[], [], []]
     tree = [[], []]
 
-    color = ["#FFCC66", "#0099FF", "#00CC33"]
+    color = ["#99CCCC", "#0033CC", "#00CC33"]
     colorMST = ["#FF6600", "#000099"]
     
     def __init__(self, _width = 600, _height = 400) :
@@ -198,7 +200,6 @@ class triangulationClass() :
 
         return v1[0] * v2[1] - v2[0] * v1[1]
 
-
     def createStruct(self) :
         self.neighbors = [[], [], []]
 
@@ -249,11 +250,45 @@ class triangulationClass() :
                 temp.append(self.neighbors[1][i][j] + n1)
             self.neighbors[2].append(temp)
 
+    def countAngle(self, p1, p2, p3) :
+        l1 = self.getLength(p1, p2)
+        l2 = self.getLength(p2, p3)
+        
+        if l1 * l2 < EPS :
+            return
+        v1 = [p2[0] - p1[0], p2[1] - p1[1]]
+        v2 = [p2[0] - p3[0], p2[1] - p3[1]]
+        
+        aCos = acos((v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2))
+        aSin = asin((v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2))
+
+        if aSin >= 0 :
+            return aCos
+        else :
+            return 2 * pi - aCos
+
+    def addPointToPencil(self, where, p_num) :
+        resAngle = []
+        for i in range(len(self.neighbors[2][where])) :
+            res = self.countAngle(self.points[2][p_num], self.points[2][where], self.points[2][self.neighbors[2][where][i]])
+            resAngle.append(res)
+
+        aMin = resAngle.index(min(resAngle))
+
+        self.neighbors[2][where].insert(aMin, p_num)
+
+    def addStarterToPencil(self, starter) :
+        for i in range(2) :
+            self.addPointToPencil(starter[i], starter[1 - i])
+
     def makeConcatenation(self) :
+        self.createStruct()
+        
         starter, pStarter = self.findFirstStarter()
         self.drawEdge(self.points[0][starter[0]], self.points[1][starter[1]], "red")
 
-        self.createStruct()
+        starter = [starter[0], starter[1] + len(self.points[1])]
+        self.addStarterToPencil(starter)
 
     def experiment(self) :
         self.startTriDone = False
@@ -263,16 +298,23 @@ class triangulationClass() :
         self.faces = [[], [], []]
         self.canvas.delete("all")
 
-        nPoints = [10, 10]
-        for i in range(2) :
-            x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
-            y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
-            self.points[i] = np.concatenate((x, y), axis = 1)
+        randomPoints = False
 
-            for j in range(len(self.points[i]) - 1) :
-                self.drawPoint(self.points[i][j], self.color[i])
+        if randomPoints == True :
+            nPoints = [10, 10]
+            for i in range(2) :
+                x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
+                y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
+                self.points[i] = np.concatenate((x, y), axis = 1)
 
-            self.secondTriangle()
+                for j in range(len(self.points[i]) - 1) :
+                    self.drawPoint(self.points[i][j], self.color[i])
+
+                self.secondTriangle()
+        else :
+            self.points[0] = []
+            self.points[1] = []
+            
 
         self.points[0] = self.points[0].tolist()
         self.points[1] = self.points[1].tolist()
