@@ -7,6 +7,7 @@ from time import *
 from scipy.spatial import Delaunay
 import numpy as np
 import Queue
+import copy
 
 class triangulationClass() :
     root = Tk()
@@ -70,8 +71,8 @@ class triangulationClass() :
     def drawPoint(self, p, col, wid = 4) :
         circle = self.canvas.create_oval(p[0] - wid, p[1] - wid, p[0] + wid, p[1] + wid, fill = col, outline = col)
             
-    def drawEdge(self, p1, p2, col) :
-        line = self.canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill = col, width = 1)
+    def drawEdge(self, p1, p2, col, wid = 1) :
+        line = self.canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill = col, width = wid)
 
     def drawTriangle(self, points, faces, col, wid = 1) :
         for f in faces :
@@ -167,16 +168,10 @@ class triangulationClass() :
         
         pTwoStarter = [self.points[0][twoStarter[0]], self.points[1][twoStarter[1]]]
         fixPoint = (pTwoStarter[0][0] < pTwoStarter[1][0]) or (pTwoStarter[0][0] == pTwoStarter[1][0] and (pTwoStarter[0][1] > pTwoStarter[1][1]))
-        """print self.points[0]
-        print self.points[1]
-        print pTwoStarter, fixPoint - 1 + 1
-        print "____________________________"""
-
+        
         endFixPoint = twoStarter[1 - fixPoint]
         pEndFixPoint = pTwoStarter[1 - fixPoint]
 
-        self.drawPoint(pTwoStarter[fixPoint], "red")
-        
         minLength = 1e+10
         for j in range(len(self.points[1 - fixPoint])) :
             p = self.points[1 - fixPoint][j]
@@ -197,11 +192,17 @@ class triangulationClass() :
 
         return res, pRes
 
+    def countSignAngle(self, p1, p2, p3) :
+        v1 = [p2[0] - p1[0], p2[1] - p1[1]]
+        v2 = [p2[0] - p3[0], p2[1] - p3[1]]
+
+        return v1[0] * v2[1] - v2[0] * v1[1]
+
+
     def createStruct(self) :
-        #self.neighbors = []
+        self.neighbors = [[], [], []]
 
         for i in range(2) :
-            print self.neighFaces[i]
             temp = [[] for x in range(len(self.points[i]))]
             flag = [False for x in range(len(self.faces[i]))]
             
@@ -214,7 +215,6 @@ class triangulationClass() :
                 if flag[cur] == True :
                     continue
 
-                print cur,
                 flag[cur] = True
                 
                 for j in range(3) :
@@ -226,10 +226,29 @@ class triangulationClass() :
                 
                 for j in range(1, 4) :
                     if len(temp[tempFace[j]]) == 0 :
-                        
+                        if self.countSignAngle(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]]) < 0 :
+                            temp[tempFace[j]] = [tempFace[j - 1], tempFace[j + 1]]
+                        else :
+                            temp[tempFace[j]] = [tempFace[j + 1], tempFace[j - 1]]
+                    elif temp[tempFace[j]][0] == tempFace[j - 1] and temp[tempFace[j]].count(tempFace[j + 1]) == 0:
+                        temp[tempFace[j]].insert(0, tempFace[j + 1])
+                    elif temp[tempFace[j]][0] == tempFace[j + 1] and temp[tempFace[j]].count(tempFace[j - 1]) == 0:
+                        temp[tempFace[j]].insert(0, tempFace[j - 1])
+                    elif temp[tempFace[j]][len(temp[tempFace[j]]) - 1] == tempFace[j - 1] and temp[tempFace[j]].count(tempFace[j + 1]) == 0:
+                        temp[tempFace[j]].insert(len(temp[tempFace[j]]), tempFace[j + 1])
+                    elif temp[tempFace[j]][len(temp[tempFace[j]]) - 1] == tempFace[j + 1] and temp[tempFace[j]].count(tempFace[j - 1]) == 0 :
+                        temp[tempFace[j]].insert(len(temp[tempFace[j]]), tempFace[j - 1])
 
-            print "good!"
-        
+            self.neighbors[i] = temp
+            
+        self.neighbors[2] = copy.deepcopy(self.neighbors[0])
+        n1 = len(self.neighbors[0])
+        for i in range(len(self.points[1])) :
+            temp = []
+            for j in range(len(self.neighbors[1][i])) :
+                temp.append(self.neighbors[1][i][j] + n1)
+            self.neighbors[2].append(temp)
+
     def makeConcatenation(self) :
         starter, pStarter = self.findFirstStarter()
         self.drawEdge(self.points[0][starter[0]], self.points[1][starter[1]], "red")
@@ -258,5 +277,3 @@ class triangulationClass() :
         self.points[0] = self.points[0].tolist()
         self.points[1] = self.points[1].tolist()
         self.makeTriangle()
-        #self.makeMST()
-        #self.makeConcatenation()
