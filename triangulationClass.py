@@ -107,7 +107,7 @@ class triangulationClass() :
             self.faces[2] = tri.vertices
             self.neighFaces[2] = tri.neighbors
 
-            self.drawTriangle(self.points[2], self.faces[2], self.color[2], 3)
+            #self.drawTriangle(self.points[2], self.faces[2], self.color[2], 3)
 
         self.makeConcatenation()
 
