@@ -7,7 +7,6 @@ from time import *
 from scipy.spatial import Delaunay
 import numpy as np
 import Queue
-import copy
 
 EPS = 1e-4
 
@@ -19,11 +18,12 @@ class triangulationClass() :
     firstTri = True
 
     points = [[], [], []]
+    nPoints = [[], [], []]
     faces = [[], [], []]
     neighFaces = [[], [], []]
     tree = [[], []]
 
-    color = ["#99CCCC", "#0033CC", "#00CC33"]
+    color = ["#C0DCC0", "#000080", "#00CC33"]
     colorMST = ["#FF6600", "#000099"]
     
     def __init__(self, _width = 600, _height = 400) :
@@ -49,8 +49,7 @@ class triangulationClass() :
 
         self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
         self.b4.place(x = 450, y = _height - 50)
-        
-        
+
     def clickMouse(self, event) :
         if self.startTriDone == False :
             getX = event.x_root
@@ -84,6 +83,9 @@ class triangulationClass() :
                 line = self.canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = col, width = wid)
 
     def makeTriangle(self) :
+        #print self.points[0]
+        #print self.points[1]
+
         if self.startTriDone == False :
             self.startTriDone = True
             
@@ -192,19 +194,21 @@ class triangulationClass() :
         else :
             res = [twoStarter[0], endFixPoint]
 
-        return res, pRes
+        return res
 
     def countSignAngle(self, p1, p2, p3) :
-        v1 = [p2[0] - p1[0], p2[1] - p1[1]]
-        v2 = [p2[0] - p3[0], p2[1] - p3[1]]
+        v1 = [p1[0] - p2[0], p1[1] - p2[1]]
+        v2 = [p3[0] - p2[0], p3[1] - p2[1]]
 
-        return v1[0] * v2[1] - v2[0] * v1[1]
+        res = v1[0] * v2[1] - v2[0] * v1[1]
+        return res
 
     def createStruct(self) :
         self.neighbors = [[], [], []]
 
         for i in range(2) :
-            temp = [[] for x in range(len(self.points[i]))]
+            self.nPoints[i] = len(self.points[i])
+            temp = [[] for x in range(self.nPoints[i])]
             flag = [False for x in range(len(self.faces[i]))]
             
             queue = Queue.Queue()
@@ -226,70 +230,252 @@ class triangulationClass() :
                 tempFace = [x[0], x[1], x[2], x[0], x[1]]
                 
                 for j in range(1, 4) :
-                    if len(temp[tempFace[j]]) == 0 :
-                        if self.countSignAngle(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]]) < 0 :
+                    n = len(temp[tempFace[j]])
+                    if n == 0 :
+                        angle = self.countSignAngle(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
+                        if angle < 0 :
                             temp[tempFace[j]] = [tempFace[j - 1], tempFace[j + 1]]
                         else :
                             temp[tempFace[j]] = [tempFace[j + 1], tempFace[j - 1]]
-                    elif temp[tempFace[j]][0] == tempFace[j - 1] and temp[tempFace[j]].count(tempFace[j + 1]) == 0:
-                        temp[tempFace[j]].insert(0, tempFace[j + 1])
-                    elif temp[tempFace[j]][0] == tempFace[j + 1] and temp[tempFace[j]].count(tempFace[j - 1]) == 0:
-                        temp[tempFace[j]].insert(0, tempFace[j - 1])
-                    elif temp[tempFace[j]][len(temp[tempFace[j]]) - 1] == tempFace[j - 1] and temp[tempFace[j]].count(tempFace[j + 1]) == 0:
-                        temp[tempFace[j]].insert(len(temp[tempFace[j]]), tempFace[j + 1])
-                    elif temp[tempFace[j]][len(temp[tempFace[j]]) - 1] == tempFace[j + 1] and temp[tempFace[j]].count(tempFace[j - 1]) == 0 :
-                        temp[tempFace[j]].insert(len(temp[tempFace[j]]), tempFace[j - 1])
+                    else :
+                        c1 = temp[tempFace[j]].count(tempFace[j - 1])
+                        c2 = temp[tempFace[j]].count(tempFace[j + 1])
+
+                        if temp[tempFace[j]][0] == tempFace[j - 1] and c2 == 0 :
+                            temp[tempFace[j]].insert(0, tempFace[j + 1])
+
+                        elif temp[tempFace[j]][0] == tempFace[j + 1] and c1 == 0 :
+                            temp[tempFace[j]].insert(0, tempFace[j - 1])
+
+                        elif temp[tempFace[j]][n - 1] == tempFace[j - 1] and c2 == 0 :
+                            temp[tempFace[j]].insert(n, tempFace[j + 1])
+
+                        elif temp[tempFace[j]][n - 1] == tempFace[j + 1] and c1 == 0 :
+                            temp[tempFace[j]].insert(n, tempFace[j - 1])         
 
             self.neighbors[i] = temp
-            
-        self.neighbors[2] = copy.deepcopy(self.neighbors[0])
-        n1 = len(self.neighbors[0])
-        for i in range(len(self.points[1])) :
-            temp = []
-            for j in range(len(self.neighbors[1][i])) :
-                temp.append(self.neighbors[1][i][j] + n1)
-            self.neighbors[2].append(temp)
+
+        self.nPoints[2] = self.nPoints[0] + self.nPoints[1]
+        self.neighbors[2] = [[] for i in range(self.nPoints[2])]
+
+        for i in range(2) :
+            for j in range(self.nPoints[i]) :
+                for k in range(len(self.neighbors[i][j])) :
+                    self.neighbors[2][i * self.nPoints[0] + j].append(self.neighbors[i][j][k] + i * self.nPoints[0])
 
     def countAngle(self, p1, p2, p3) :
         l1 = self.getLength(p1, p2)
         l2 = self.getLength(p2, p3)
         
-        if l1 * l2 < EPS :
-            return
+        if l1 * l2 == 0 :
+            return 0
+
         v1 = [p2[0] - p1[0], p2[1] - p1[1]]
         v2 = [p2[0] - p3[0], p2[1] - p3[1]]
-        
-        aCos = acos((v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2))
-        aSin = asin((v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2))
 
+        aSin = asin((v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2))
+        aCos = acos((v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2))
         if aSin >= 0 :
             return aCos
         else :
             return 2 * pi - aCos
 
     def addPointToPencil(self, where, p_num) :
+        if self.neighbors[2][where].count(p_num) > 0 :
+            return
+
+        numPoints = len(self.neighbors[2][where])
         resAngle = []
-        for i in range(len(self.neighbors[2][where])) :
-            res = self.countAngle(self.points[2][p_num], self.points[2][where], self.points[2][self.neighbors[2][where][i]])
+        for j in range(numPoints) :
+            res = self.countAngle(self.points[2][self.neighbors[2][where][j]], self.points[2][where], self.points[2][p_num])
             resAngle.append(res)
-
+        
         aMin = resAngle.index(min(resAngle))
-
+        
         self.neighbors[2][where].insert(aMin, p_num)
-
-    def addStarterToPencil(self, starter) :
+        
+    def addStarterPointsToPencil(self, starter) :
         for i in range(2) :
             self.addPointToPencil(starter[i], starter[1 - i])
+
+    def deleteWrongEdges(self, starter, reverse = 0) :
+        [a_num, b_num] = starter
+        a = self.points[2][a_num]
+        b = self.points[2][b_num]
+        while(1) :
+            idx = self.neighbors[2][a_num].index(b_num)
+            numPoints = len(self.neighbors[2][a_num])
+            c1_num = self.neighbors[2][a_num][(idx - 1) % numPoints]
+            c1 = self.points[2][c1_num]
+            c2_num = self.neighbors[2][a_num][(idx - 2) % numPoints]
+            c2 = self.points[2][c2_num]
+            
+            """self.drawPoint(a, "purple")
+            self.drawPoint(c1, "purple")
+            self.drawPoint(c2, "purple")"""
+
+            if c1_num == idx or c2_num == idx:
+                break
+                
+            abc1 = self.countAngle(c1, b, a)
+            ac1c2 = self.countAngle(a, c2, c1)
+            #print "abc1 ", abc1, " ac1c2 ", ac1c2
+            #return 
+            
+            if abc1 + ac1c2 <= pi or abc1 > pi or ac1c2 > pi:
+                break
+            else :
+                self.neighbors[2][a_num].remove(c1_num)
+                self.neighbors[2][c1_num].remove(a_num)
+            
+        while(1) :
+            idx = self.neighbors[2][a_num].index(b_num)
+            numPoints = len(self.neighbors[2][a_num])
+            c1_num = self.neighbors[2][a_num][(idx + 1) % numPoints]
+            c1 = self.points[2][c1_num]
+            c2_num = self.neighbors[2][a_num][(idx + 2) % numPoints]
+            c2 = self.points[2][c2_num]
+
+            if c1_num == idx or c2_num == idx:
+                break
+                
+            abc1 = self.countAngle(a, b, c1)
+            ac1c2 = self.countAngle(c1, c2, a)
+            
+            if abc1 + ac1c2 <= pi or abc1 > pi or ac1c2 > pi:
+                break
+            else :
+                self.neighbors[2][a_num].remove(c1_num)
+                self.neighbors[2][c1_num].remove(a_num)
+
+        if reverse == 0 :
+            self.deleteWrongEdges([starter[1], starter[0]], 1)
+
+    def checkNewEdge(self, e1, e2) :
+        return (e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] == e2[1] and e1[1] == e2[0])
+
+    def sewTriangle(self, starter, reverse = 0) :
+        [a_num, b_num] = starter
+        a = self.points[2][a_num]
+        b = self.points[2][b_num]
+        
+        while(1) :
+            idx1 = self.neighbors[2][a_num].index(b_num)
+            c_num = self.neighbors[2][a_num][(idx1 - 1) % len(self.neighbors[2][a_num])]
+            c = self.points[2][c_num]
+
+            idx2 = self.neighbors[2][b_num].index(a_num)
+            d_num = self.neighbors[2][b_num][(idx2 + 1) % len(self.neighbors[2][b_num])]
+            d = self.points[2][d_num]
+            
+            """if a_num == 2 :
+                print self.neighbors[2][5]
+
+            print a_num, b_num
+            self.drawPoint(a, "purple")
+            self.drawPoint(c, "black")
+            self.drawPoint(b, "purple")
+            self.drawPoint(d, "white")
+            
+            nb = raw_input()"""
+
+            acb = self.countAngle(a, c, b)
+            abd = self.countAngle(a, d, b)
+            #print "acb ", acb, " abd ", abd
+            #return
+            #print "wtf"
+
+            if (acb > abd and  acb < pi) or (abd >= pi and acb < pi) : # CB is edge
+                self.drawEdge(c, b, "purple", 2)
+                
+                self.addPointToPencil(c_num, b_num)
+                self.addPointToPencil(b_num, c_num)
+                
+                aInC = self.neighbors[2][c_num].index(a_num)
+                i = (aInC - 1) % len(self.neighbors[2][c_num])
+                while(1) :
+                    if self.neighbors[2][c_num][i] != b_num :
+                        self.neighbors[2][self.neighbors[2][c_num][i]].remove(c_num)
+                        self.neighbors[2][c_num].pop(i)
+                        i = (i - 1) % len(self.neighbors[2][c_num])
+                    else :
+                        break
+
+                cInB = self.neighbors[2][b_num].index(c_num)
+                i = (cInB - 1) % len(self.neighbors[2][b_num])
+                while(1) :
+                    if self.neighbors[2][b_num][i] != a_num :
+                        self.neighbors[2][self.neighbors[2][b_num][i]].remove(b_num)
+                        self.neighbors[2][b_num].pop(i)
+                        i = (i - 1) % len(self.neighbors[2][b_num])
+                    else :
+                        break
+
+                if self.checkNewEdge(starter, [c_num, b_num]) :
+                    reverse = 2
+                    break
+                else :
+                    a_num = c_num
+                    a = c
+            elif (acb < abd and  abd < pi) or (acb >= pi and abd < pi) : # AD is edge
+                self.drawEdge(a, d, "yellow", 2)
+                
+                self.addPointToPencil(d_num, a_num)
+                self.addPointToPencil(a_num, d_num)
+
+                aInD = self.neighbors[2][d_num].index(a_num)
+                i = (aInD - 1) % len(self.neighbors[2][d_num])
+                while(1) :
+                    if self.neighbors[2][d_num][i] != b_num :
+                        self.neighbors[2][self.neighbors[2][d_num][i]].remove(d_num)
+                        self.neighbors[2][d_num].pop(i)
+                        i = (i - 1) % len(self.neighbors[2][d_num])
+                    else :
+                        break
+
+                bInA = self.neighbors[2][a_num].index(b_num)
+                i = (bInA - 1) % len(self.neighbors[2][a_num])
+                while(1) :
+                    if self.neighbors[2][a_num][i] != d_num :
+                        self.neighbors[2][self.neighbors[2][a_num][i]].remove(a_num)
+                        self.neighbors[2][a_num].pop(i)
+                        i = (i - 1) % len(self.neighbors[2][a_num])
+                    else :
+                        break
+
+                if self.checkNewEdge(starter, [a_num, d_num]) :
+                    reverse = 2
+                    break
+                else :
+                    b_num = d_num
+                    b = d
+            else :
+                break
+            #nb = raw_input()
+
+        if reverse == 0 :
+            self.sewTriangle([starter[1], starter[0]], 1)
 
     def makeConcatenation(self) :
         self.createStruct()
         
-        starter, pStarter = self.findFirstStarter()
+        starter = self.findFirstStarter()
         self.drawEdge(self.points[0][starter[0]], self.points[1][starter[1]], "red")
 
-        starter = [starter[0], starter[1] + len(self.points[1])]
-        self.addStarterToPencil(starter)
-
+        starter = [starter[0], starter[1] + self.nPoints[0]]
+        self.addStarterPointsToPencil(starter)
+        
+        self.deleteWrongEdges(starter)
+        
+        """b_num = starter[0]
+        for p in self.neighbors[2][b_num] :
+            self.drawPoint(self.points[2][p], "green")"""
+        
+        """print "light green ", self.neighbors[2][starter[0]]
+        print "blue", self.neighbors[2][starter[1]]
+        print self.neighbors[2][5]"""
+        self.sewTriangle(starter)
+        
     def experiment(self) :
         self.startTriDone = False
         self.checkTriDone = False
@@ -298,9 +484,17 @@ class triangulationClass() :
         self.faces = [[], [], []]
         self.canvas.delete("all")
 
-        randomPoints = False
-
-        if randomPoints == True :
+        randomPoints = 0 # 0 - not rand, 1 - rand, 2 - grid rand
+        if randomPoints == 0 :
+            #self.points[0] = [[147, 93], [226, 45], [253, 130], [149, 197], [78, 54], [-1, -1]]
+            #self.points[1] = [[391, 124], [478, 133], [432, 181], [-1, -1]]
+            
+            self.points[0] = [[80, 209], [155, 141], [223, 183], [217, 264], [138, 297], [92, 365]]
+            self.points[1] = [[159, 235], [268, 314], [314, 266], [275, 370]]
+            for i in range(2) :
+                for j in range(len(self.points[i]) - 1) :
+                    self.drawPoint(self.points[i][j], self.color[i])
+        elif randomPoints == 1 :
             nPoints = [10, 10]
             for i in range(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
@@ -311,11 +505,10 @@ class triangulationClass() :
                     self.drawPoint(self.points[i][j], self.color[i])
 
                 self.secondTriangle()
-        else :
-            self.points[0] = []
-            self.points[1] = []
-            
 
-        self.points[0] = self.points[0].tolist()
-        self.points[1] = self.points[1].tolist()
+            self.points[0] = self.points[0].tolist()
+            self.points[1] = self.points[1].tolist()
+        else :
+            pass
+
         self.makeTriangle()
