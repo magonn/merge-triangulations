@@ -114,7 +114,7 @@ class triangulationClass() :
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
 
-                #self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
+                self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
 
         if self.checkTriDone == False :
             self.checkTriDone = True
@@ -312,8 +312,20 @@ class triangulationClass() :
         v1 = [p2[0] - p1[0], p2[1] - p1[1]]
         v2 = [p2[0] - p3[0], p2[1] - p3[1]]
 
-        aSin = asin((v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2))
-        aCos = acos((v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2))
+        sin_arg = (v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2)
+        if abs(abs(sin_arg) - 1) < EPS :
+            x = copysign(1, sin_arg)
+            aSin = asin(x)
+        else :
+            aSin = asin(sin_arg)
+
+        cos_arg = (v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2)
+        if abs(abs(cos_arg) - 1) < EPS :
+            x = copysign(1, cos_arg)
+            aCos = acos(x)
+        else :
+            aCos = acos(cos_arg)
+        
         if aSin >= 0 :
             return aCos
         else :
@@ -421,7 +433,6 @@ class triangulationClass() :
         self.drawEdge(a, b, "red", 3)
         
         while(1) :
-            self.drawAllPoints()
             self.deleteWrongEdges([a_num, b_num])
             
             idx1 = self.neighbors[2][a_num].index(b_num)
@@ -432,6 +443,7 @@ class triangulationClass() :
             d_num = self.neighbors[2][b_num][(idx2 + 1) % len(self.neighbors[2][b_num])]
             d = self.points[2][d_num]
             
+            #print "EDGE", a_num, b_num, c_num, d_num
             """self.drawPoint(c, "yellow", 3, 0)
             self.drawPoint(d, "white", 3, 0)
             nb = raw_input()"""
@@ -439,9 +451,9 @@ class triangulationClass() :
             acb = self.countAngle(a, c, b)
             adb = self.countAngle(a, d, b)
 
-            #print "acb ", acb, " abd ", abd
+            #print "acb ", acb, "adb ", adb
             
-            if (acb > adb and acb < pi) or (adb >= pi and acb < pi) : # CB is edge
+            if (c_num != b_num) and ((acb > adb and acb < pi) or (adb >= pi and acb < pi)) : # CB is edge
                 self.addEdgeToPencil([c_num, b_num])
                 
                 aInC = self.neighbors[2][c_num].index(a_num)
@@ -476,7 +488,7 @@ class triangulationClass() :
                 else :
                     a_num = c_num
                     a = c
-            elif (acb < adb and  adb < pi) or (acb >= pi and adb < pi) : # AD is edge
+            elif (a_num != d_num) and (acb < adb and  adb < pi) or (acb >= pi and adb < pi) : # AD is edge
                 self.addEdgeToPencil([a_num, d_num])
 
                 aInD = self.neighbors[2][d_num].index(a_num)
@@ -535,8 +547,11 @@ class triangulationClass() :
     def intersect(self, line1, line2) :
         [a1, b1, c1] = line1
         [a2, b2, c2] = line2
-        x0 = (c2 * b1 - c1 * b2) / (a1 * b2 - a2 * b1)
-        y0 = (c2 * a1 - c1 * a2) / (b1 * a2 - b2 * a1)
+        det = a1 * b2 - a2 * b1
+        if abs(det) < EPS :
+            return [1000, 1000]
+        x0 = (c2 * b1 - c1 * b2) / det
+        y0 = (c2 * a1 - c1 * a2) / (-det)
         return [x0, y0]
 
     def findNextStarter(self) :
@@ -622,8 +637,8 @@ class triangulationClass() :
                 self.drawPoint(self.points[i][j], self.color[i], 3, 0)
 
     def makeConcatenation(self) :
-        #print "self.points[0] =", self.points[0]
-        #print "self.points[1] =", self.points[1]
+        print "self.points[0] =", self.points[0]
+        print "self.points[1] =", self.points[1]
         
         self.createStruct()
         self.makeMST()
@@ -655,7 +670,7 @@ class triangulationClass() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - not rand, 1 - rand, 2 - grid rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -667,37 +682,26 @@ class triangulationClass() :
             #self.points[1] = [[159, 235], [268, 314], [314, 266]]
             
             #model example in report
-            self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
-            self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
+            #self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
+            #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
 
-            for i in range(2) :
-                for j in range(len(self.points[i])) :
-                    self.drawPoint(self.points[i][j], self.color[i], 3, i)
+            #error
+            self.points[0] = [[72, 344], [190, 101], [374, 124], [583, 241], [481, 267], [325, 134], [330, 325], [484, 39], [136, 12], [33, 34]]
+            self.points[1] = [[17, 232], [197, 229], [307, 173], [390, 146], [72, 80], [510, 317], [562, 119], [43, 198], [231, 31], [445, 104]]
+
+            self.drawAllPoints()
         elif randomPoints == 1 :
-            nPoints = [5, 5]
+            nPoints = [10, 10]
             for i in range(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
                 self.points[i] = np.concatenate((x, y), axis = 1)
 
-                for j in range(len(self.points[i]) - 1) :
-                    self.drawPoint(self.points[i][j], self.color[i], 3, i)
-
                 self.secondTriangle()
 
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
-        else :
-            sumPoints = [10 * x for x in range(1, 2)]
-            for n in sumPoints :
-                temp = []
-                for i in range(n) :
-                    x = randrange(self.width - 10) + 5
-                    y = randrange(self.height - 60) + 5
- 
-                    temp.append([x, y])
-                temp.sort()
-                print(temp)
+            self.drawAllPoints()
 
         self.makeTriangle()
         print("ok")
