@@ -17,6 +17,7 @@ class triangulationClass() :
     checkTriDone = False
     firstTri = True
     experimentMode = False
+    MSTmode = False
 
     points = [[], [], []]
     nPoints = [[], [], []]
@@ -27,9 +28,9 @@ class triangulationClass() :
     mst = []
     bridges = []
 
-    color = ["#FA8072", "#87CEEB", "#00CC33"]
-    #color = ["black", "black", "black"]
-    #colorMST = ["#FF6600", "#000099"]
+    #color = ["#FA8072", "#87CEEB", "#00CC33"]
+    color = ["black", "black", "black"]
+    colorMST = ["#FF6600", "#000099"]
     
     def __init__(self, _width = 600, _height = 400) :
         self.width = _width
@@ -49,7 +50,7 @@ class triangulationClass() :
         self.b2 = Button(self.root, bg = "white", fg = "blue", text = "Triangulation", command = self.makeTriangle)
         self.b2.place(x = 200, y = _height - 50)        
         
-        self.b3 = Button(self.root, bg = "white", fg = "blue", text = "MST", command = self.makeMST)
+        self.b3 = Button(self.root, bg = "white", fg = "blue", text = "MST", command = self.MST)
         self.b3.place(x = 350, y = _height - 50)
 
         self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
@@ -103,6 +104,7 @@ class triangulationClass() :
                     line = self.canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = col, width = wid, dash = '- -')
      
     def makeTriangle(self) :
+        sciPyTime = 0
         if self.startTriDone == False :
             self.startTriDone = True
             
@@ -114,11 +116,15 @@ class triangulationClass() :
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
 
-                self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
+                if self.MSTmode == True :
+                    self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
 
         if self.checkTriDone == False :
             self.checkTriDone = True
+            
+            start1 = time()
 
+            self.points[2] = []
             self.points[2].extend(self.points[0])
             self.points[2].extend(self.points[1])
             
@@ -126,10 +132,17 @@ class triangulationClass() :
             self.faces[2] = tri.vertices
             self.neighFaces[2] = tri.neighbors
 
-            self.drawTriangle(self.points[2], self.faces[2], "green", 4, 2)
+            finish1 = time()
+            sciPyTime = finish1 - start1
 
-        self.makeConcatenation()
+            if self.MSTmode == False :
+                self.drawTriangle(self.points[2], self.faces[2], "green", 4, 2)
+                #self.drawTriangle(self.points[2], self.faces[2], "black", 1, 0)
 
+        if self.MSTmode == False :
+            myTime = self.makeConcatenation()
+            return [sciPyTime, myTime]
+        
     def drawMST(self, num, col = "black", wid = 1) :
         for j in range(len(self.tree[num])) :
             p1 = self.points[num][self.tree[num][j][0]]
@@ -180,6 +193,16 @@ class triangulationClass() :
         for i in range(2) :
             for j in range(len(self.tree[i])) :
                 self.mst.append([self.tree[i][j][0] + i * n1, self.tree[i][j][1] + i * n1])
+
+    def MST(self) :
+        self.MSTmode = True
+        self.makeTriangle()
+        
+        self.makeMST()
+        self.drawMST(0, "black", 2)
+        self.drawMST(1, "black", 2)
+        self.drawAllPoints()
+        self.MSTmode = False      
 
     def findFirstStarter(self) :
         twoStarter = [0, 0]
@@ -607,7 +630,7 @@ class triangulationClass() :
             nb = raw_input()"""
 
             temp = self.getLength(p0, openPoint)
-            if temp < minLength :
+            if min(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) <= p0[0] and p0[0] <= max(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) and temp < minLength :
                 minLength = temp
                 num_endStarter = i
 
@@ -633,8 +656,7 @@ class triangulationClass() :
     def drawAllPoints(self) :
         for i in range(2) :
             for j in range(len(self.points[i])) :
-                #self.drawPoint(self.points[i][j], self.color[i], 3, i)
-                self.drawPoint(self.points[i][j], self.color[i], 3, 0)
+                self.drawPoint(self.points[i][j], self.color[i], 3, i)
 
     def makeConcatenation(self) :
         print "self.points[0] =", self.points[0]
@@ -642,7 +664,8 @@ class triangulationClass() :
         
         self.createStruct()
         self.makeMST()
-        self.drawAllPoints()
+        
+        start = time()        
 
         starter = self.findFirstStarter()
         self.addEdgeToPencil(starter)
@@ -656,8 +679,13 @@ class triangulationClass() :
                 break
             self.addEdgeToPencil(starter)
             self.sewTriangle(starter)
-                
+        
+        finish = time()
+
         self.drawStruct()
+        self.drawAllPoints()
+        print "ok"
+        return finish - start
         
     def experiment(self) :
         self.startTriDone = False
@@ -682,16 +710,14 @@ class triangulationClass() :
             #self.points[1] = [[159, 235], [268, 314], [314, 266]]
             
             #model example in report
-            #self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
-            #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
+            self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
+            self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
 
-            #error
-            self.points[0] = [[72, 344], [190, 101], [374, 124], [583, 241], [481, 267], [325, 134], [330, 325], [484, 39], [136, 12], [33, 34]]
-            self.points[1] = [[17, 232], [197, 229], [307, 173], [390, 146], [72, 80], [510, 317], [562, 119], [43, 198], [231, 31], [445, 104]]
-
-            self.drawAllPoints()
+            # big example
+            #self.points[0] = [[144, 161], [272, 247], [70, 341], [360, 205], [474, 294], [87, 153], [351, 127], [543, 136], [468, 324], [447, 38], [571, 129], [176, 182], [179, 341], [452, 212], [95, 320], [31, 236], [265, 75], [548, 21], [364, 191], [111, 78], [369, 88], [454, 105], [42, 233], [49, 125], [503, 175], [56, 93], [92, 248], [474, 92], [19, 269], [467, 283], [427, 239], [463, 15], [232, 20], [405, 141], [135, 177], [483, 37], [440, 102], [184, 160], [553, 147], [338, 330], [121, 26], [306, 152], [137, 93], [107, 124], [448, 339], [481, 77], [397, 113], [570, 285], [11, 38], [343, 113], [379, 39], [16, 146], [238, 196], [481, 125], [24, 207], [97, 81], [535, 194], [114, 46], [80, 213], [512, 268], [72, 276], [185, 21], [429, 278], [90, 212], [75, 65], [512, 7], [287, 5], [532, 284], [371, 234], [455, 311], [367, 320], [31, 151], [406, 188], [359, 252], [457, 334], [479, 185], [39, 213], [236, 298], [217, 29], [123, 275], [508, 285], [294, 67], [375, 219], [462, 118], [196, 117], [15, 179], [318, 9], [525, 290], [121, 86], [47, 207], [321, 27], [539, 206], [74, 82], [33, 43], [360, 144], [50, 101], [392, 160], [550, 126], [38, 33], [159, 110]]
+            #elf.points[1] = [[444, 249], [337, 338], [574, 206], [212, 173], [437, 275], [477, 118], [172, 163], [129, 232], [481, 143], [551, 65], [543, 12], [93, 88], [556, 85], [468, 236], [477, 86], [438, 159], [123, 288], [562, 14], [19, 57], [176, 256], [98, 302], [228, 343], [451, 52], [571, 211], [108, 62], [484, 243], [496, 250], [315, 342], [358, 264], [499, 39], [321, 283], [269, 228], [81, 81], [113, 245], [201, 296], [371, 250], [579, 263], [315, 105], [344, 48], [290, 57], [499, 251], [81, 238], [509, 109], [510, 246], [325, 128], [118, 302], [357, 16], [78, 217], [69, 133], [195, 343], [545, 232], [236, 231], [467, 341], [204, 329], [545, 301], [89, 166], [477, 159], [483, 49], [35, 314], [343, 327], [312, 188], [107, 244], [24, 120], [126, 165], [475, 120], [15, 72], [344, 97], [221, 44], [111, 246], [16, 182], [181, 71], [305, 267], [111, 10], [94, 187], [144, 308], [190, 105], [366, 277], [474, 231], [308, 111], [65, 17], [477, 343], [475, 81], [574, 39], [581, 36], [538, 330], [506, 167], [317, 123], [243, 213], [54, 181], [363, 113], [28, 214], [211, 337], [375, 146], [481, 279], [552, 193], [456, 270], [519, 183], [133, 20], [250, 15], [523, 95]]
         elif randomPoints == 1 :
-            nPoints = [10, 10]
+            nPoints = [500, 500]
             for i in range(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -701,7 +727,28 @@ class triangulationClass() :
 
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
-            self.drawAllPoints()
+        else :
+            p1 = [400, 200]
+            p2 = [300, 250]
+            self.drawEdge([200, 200], [400, 200], "black", 1, 0)
+            self.drawEdge([300, 250], [400, 200], "black", 1, 1)
+            self.drawPoint(p1, "black", 3, 0)
+            self.drawPoint(p2, "black", 3, 1)
+            x = 320
+            y = 2 * x - 475
+            #line = self.lineParameters(p1, p2)
+            #lineP = self.perpendicular([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], line)
+            self.drawEdge([x, y], [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 1, 1)
+            
+            self.drawPoint([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 3, 1)
+            self.drawPoint([337, 200], "black", 3, 1)
+            self.drawPoint([250, 150], "black", 3, 1)
+            self.drawPoint([230, 220], "black", 3, 1)
+            self.drawPoint([380, 100], "black", 3, 1)
+            self.drawCircle([337, 200], "black", 400 - 337, 0)
+            
+            return
 
-        self.makeTriangle()
-        print("ok")
+        self.drawAllPoints()
+        [sciPyTime, myTime] = self.makeTriangle()
+        print "sciPy", sciPyTime, "my", myTime
