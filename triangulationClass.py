@@ -53,7 +53,7 @@ class triangulationClass() :
         self.b3 = Button(self.root, bg = "white", fg = "blue", text = "MST", command = self.MST)
         self.b3.place(x = 350, y = _height - 50)
 
-        self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
+        self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experimentTime)
         self.b4.place(x = 450, y = _height - 50)
 
     def clickMouse(self, event) :
@@ -69,7 +69,6 @@ class triangulationClass() :
 
             p = [x, y]
             self.points[self.firstTri == False].append(p)
-            
             self.drawPoint(p, self.color[self.firstTri == False], 3, self.firstTri == False)
     
     def secondTriangle(self) :
@@ -118,6 +117,7 @@ class triangulationClass() :
 
                 if self.MSTmode == True :
                     self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
+                    self.drawAllPoints()
 
         if self.checkTriDone == False :
             self.checkTriDone = True
@@ -450,10 +450,13 @@ class triangulationClass() :
         return (e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] == e2[1] and e1[1] == e2[0])
 
     def sewTriangle(self, starter, reverse = 0) :
-        [a_num, b_num] = starter
+        [b_num, a_num] = starter
         a = self.points[2][a_num]
         b = self.points[2][b_num]
         self.drawEdge(a, b, "red", 3)
+        #self.drawEdge(a, b, "black", 3)
+        #self.drawAllPoints()
+        #nb = raw_input()
         
         while(1) :
             self.deleteWrongEdges([a_num, b_num])
@@ -549,6 +552,8 @@ class triangulationClass() :
             else :
                 break
             #self.drawEdge(a, b, "purple", 1, 0)
+            #self.drawEdge(a, b, "black", 3, 1)
+            #self.drawAllPoints()
             #nb = raw_input()
 
         if reverse == 0 :
@@ -630,7 +635,11 @@ class triangulationClass() :
             nb = raw_input()"""
 
             temp = self.getLength(p0, openPoint)
-            if min(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) <= p0[0] and p0[0] <= max(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) and temp < minLength :
+            if min(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) <= p0[0] and \
+               p0[0] <= max(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) and \
+               min(self.points[2][curBridge[0]][1], self.points[2][curBridge[1]][1]) <= p0[1] and \
+               p0[1] <= max(self.points[2][curBridge[0]][1], self.points[2][curBridge[1]][1]) and \
+               temp < minLength :
                 minLength = temp
                 num_endStarter = i
 
@@ -659,9 +668,8 @@ class triangulationClass() :
                 self.drawPoint(self.points[i][j], self.color[i], 3, i)
 
     def makeConcatenation(self) :
-        print "self.points[0] =", self.points[0]
-        print "self.points[1] =", self.points[1]
-        
+        #print "self.points[0] =", self.points[0]
+        #print "self.points[1] =", self.points[1]
         self.createStruct()
         self.makeMST()
         
@@ -698,7 +706,7 @@ class triangulationClass() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -706,18 +714,21 @@ class triangulationClass() :
             #self.points[1] = [[391, 124], [478, 133], [432, 181]]
             
             #example starter in report
-            #self.points[0] = [[80, 209], [155, 141], [223, 183], [217, 264], [138, 297]]
-            #self.points[1] = [[159, 235], [268, 314], [314, 266]]
-            
+            #self.points[0] = [[208, 180], [151, 210], [175, 126], [252, 134], [236, 227]]
+            #self.points[1] = [[192, 203], [199, 147], [249, 187], [300, 158], [270, 236]]
+
             #model example in report
-            self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
-            self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
+            #self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
+            #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
 
             # big example
             #self.points[0] = [[144, 161], [272, 247], [70, 341], [360, 205], [474, 294], [87, 153], [351, 127], [543, 136], [468, 324], [447, 38], [571, 129], [176, 182], [179, 341], [452, 212], [95, 320], [31, 236], [265, 75], [548, 21], [364, 191], [111, 78], [369, 88], [454, 105], [42, 233], [49, 125], [503, 175], [56, 93], [92, 248], [474, 92], [19, 269], [467, 283], [427, 239], [463, 15], [232, 20], [405, 141], [135, 177], [483, 37], [440, 102], [184, 160], [553, 147], [338, 330], [121, 26], [306, 152], [137, 93], [107, 124], [448, 339], [481, 77], [397, 113], [570, 285], [11, 38], [343, 113], [379, 39], [16, 146], [238, 196], [481, 125], [24, 207], [97, 81], [535, 194], [114, 46], [80, 213], [512, 268], [72, 276], [185, 21], [429, 278], [90, 212], [75, 65], [512, 7], [287, 5], [532, 284], [371, 234], [455, 311], [367, 320], [31, 151], [406, 188], [359, 252], [457, 334], [479, 185], [39, 213], [236, 298], [217, 29], [123, 275], [508, 285], [294, 67], [375, 219], [462, 118], [196, 117], [15, 179], [318, 9], [525, 290], [121, 86], [47, 207], [321, 27], [539, 206], [74, 82], [33, 43], [360, 144], [50, 101], [392, 160], [550, 126], [38, 33], [159, 110]]
-            #elf.points[1] = [[444, 249], [337, 338], [574, 206], [212, 173], [437, 275], [477, 118], [172, 163], [129, 232], [481, 143], [551, 65], [543, 12], [93, 88], [556, 85], [468, 236], [477, 86], [438, 159], [123, 288], [562, 14], [19, 57], [176, 256], [98, 302], [228, 343], [451, 52], [571, 211], [108, 62], [484, 243], [496, 250], [315, 342], [358, 264], [499, 39], [321, 283], [269, 228], [81, 81], [113, 245], [201, 296], [371, 250], [579, 263], [315, 105], [344, 48], [290, 57], [499, 251], [81, 238], [509, 109], [510, 246], [325, 128], [118, 302], [357, 16], [78, 217], [69, 133], [195, 343], [545, 232], [236, 231], [467, 341], [204, 329], [545, 301], [89, 166], [477, 159], [483, 49], [35, 314], [343, 327], [312, 188], [107, 244], [24, 120], [126, 165], [475, 120], [15, 72], [344, 97], [221, 44], [111, 246], [16, 182], [181, 71], [305, 267], [111, 10], [94, 187], [144, 308], [190, 105], [366, 277], [474, 231], [308, 111], [65, 17], [477, 343], [475, 81], [574, 39], [581, 36], [538, 330], [506, 167], [317, 123], [243, 213], [54, 181], [363, 113], [28, 214], [211, 337], [375, 146], [481, 279], [552, 193], [456, 270], [519, 183], [133, 20], [250, 15], [523, 95]]
+            #self.points[1] = [[444, 249], [337, 338], [574, 206], [212, 173], [437, 275], [477, 118], [172, 163], [129, 232], [481, 143], [551, 65], [543, 12], [93, 88], [556, 85], [468, 236], [477, 86], [438, 159], [123, 288], [562, 14], [19, 57], [176, 256], [98, 302], [228, 343], [451, 52], [571, 211], [108, 62], [484, 243], [496, 250], [315, 342], [358, 264], [499, 39], [321, 283], [269, 228], [81, 81], [113, 245], [201, 296], [371, 250], [579, 263], [315, 105], [344, 48], [290, 57], [499, 251], [81, 238], [509, 109], [510, 246], [325, 128], [118, 302], [357, 16], [78, 217], [69, 133], [195, 343], [545, 232], [236, 231], [467, 341], [204, 329], [545, 301], [89, 166], [477, 159], [483, 49], [35, 314], [343, 327], [312, 188], [107, 244], [24, 120], [126, 165], [475, 120], [15, 72], [344, 97], [221, 44], [111, 246], [16, 182], [181, 71], [305, 267], [111, 10], [94, 187], [144, 308], [190, 105], [366, 277], [474, 231], [308, 111], [65, 17], [477, 343], [475, 81], [574, 39], [581, 36], [538, 330], [506, 167], [317, 123], [243, 213], [54, 181], [363, 113], [28, 214], [211, 337], [375, 146], [481, 279], [552, 193], [456, 270], [519, 183], [133, 20], [250, 15], [523, 95]]
+            self.points[0] = [[484, 230], [268, 43], [515, 237], [472, 191], [164, 285], [50, 331], [578, 200], [436, 21], [33, 276], [426, 179], [123, 13], [450, 216], [268, 218], [276, 97], [227, 331], [196, 176], [114, 338], [39, 326], [140, 76], [534, 295]]
+            self.points[1] = [[400, 201], [281, 56], [281, 185], [538, 269], [45, 253], [185, 94], [433, 37], [390, 250], [548, 23], [405, 324], [568, 298], [329, 138], [422, 257], [361, 275], [469, 344], [140, 141], [433, 264], [314, 17], [95, 114], [49, 100]]
+        
         elif randomPoints == 1 :
-            nPoints = [500, 500]
+            nPoints = [20, 20]
             for i in range(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -752,3 +763,38 @@ class triangulationClass() :
         self.drawAllPoints()
         [sciPyTime, myTime] = self.makeTriangle()
         print "sciPy", sciPyTime, "my", myTime
+
+    def experimentTime(self) :
+        fout = open('res3.txt', 'w')
+        nPoints = [10 * x for x in range(1, 91)]
+        for n in nPoints :
+            while True :
+                self.startTriDone = False
+                self.checkTriDone = False
+                self.firstTri = True
+                self.points = [[], [], []]
+                self.faces = [[], [], []]
+                self.bridges = []
+
+                self.canvas.delete("all")
+                self.experimentMode = True
+
+                for i in range(2) :
+                    x = np.random.randint(0, self.width - 20, (n, 1)) + 10
+                    y = np.random.randint(0, self.height - 60, (n, 1)) + 5
+                    self.points[i] = np.concatenate((x, y), axis = 1)
+
+                    self.secondTriangle()
+
+                self.points[0] = self.points[0].tolist()
+                self.points[1] = self.points[1].tolist()
+
+
+                try :
+                    [sciPyTime, myTime] = self.makeTriangle()
+                    print n
+                    fout.write(str(n) + ' ' + str(sciPyTime) + ' ' + str(myTime) + '\n')
+                    break
+                except ValueError :
+                    print "exception"
+                    pass
