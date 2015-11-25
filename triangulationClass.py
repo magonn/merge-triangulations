@@ -28,6 +28,8 @@ class triangulationClass() :
     mst = []
     bridges = []
 
+    testMode = False
+
     #color = ["#FA8072", "#87CEEB", "#00CC33"]
     color = ["black", "black", "black"]
     colorMST = ["#FF6600", "#000099"]
@@ -53,7 +55,7 @@ class triangulationClass() :
         self.b3 = Button(self.root, bg = "white", fg = "blue", text = "MST", command = self.MST)
         self.b3.place(x = 350, y = _height - 50)
 
-        self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experimentTime)
+        self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
         self.b4.place(x = 450, y = _height - 50)
 
     def clickMouse(self, event) :
@@ -101,8 +103,11 @@ class triangulationClass() :
                     line = self.canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = col, width = wid)
                 else :
                     line = self.canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = col, width = wid, dash = '- -')
-     
+    
     def makeTriangle(self) :
+        #print self.points[0]
+        #print self.points[1]
+
         sciPyTime = 0
         if self.startTriDone == False :
             self.startTriDone = True
@@ -115,9 +120,8 @@ class triangulationClass() :
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
 
-                if self.MSTmode == True :
-                    self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
-                    self.drawAllPoints()
+                #self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
+                #self.drawAllPoints()
 
         if self.checkTriDone == False :
             self.checkTriDone = True
@@ -136,13 +140,17 @@ class triangulationClass() :
             sciPyTime = finish1 - start1
 
             if self.MSTmode == False :
-                self.drawTriangle(self.points[2], self.faces[2], "green", 4, 2)
-                #self.drawTriangle(self.points[2], self.faces[2], "black", 1, 0)
+                self.drawTriangle(self.points[2], self.faces[2], "green", 5, 2)
+                self.drawAllPoints()
+                #self.drawTriangle(self.points[2], self.faces[2], "purple", 2, 0)
 
         if self.MSTmode == False :
+            #myTime = self.makeConcatenation("yellow", 3)
             myTime = self.makeConcatenation()
-            return [sciPyTime, myTime]
-        
+            #self.testMode = True
+            #myTimeTest = self.makeConcatenation()
+            return [sciPyTime, myTime]#, myTimeTest]
+            
     def drawMST(self, num, col = "black", wid = 1) :
         for j in range(len(self.tree[num])) :
             p1 = self.points[num][self.tree[num][j][0]]
@@ -200,7 +208,6 @@ class triangulationClass() :
         
         self.makeMST()
         self.drawMST(0, "black", 2)
-        self.drawMST(1, "black", 2)
         self.drawAllPoints()
         self.MSTmode = False      
 
@@ -252,11 +259,23 @@ class triangulationClass() :
         res = v1[0] * v2[1] - v2[0] * v1[1]
         return res
 
-    def drawStruct(self) :
+    def drawStruct(self, col = "black", wid = 1) :
         for i in range(len(self.points[2])) :
             p1 = self.points[2][i]
             for j in range(len(self.neighbors[2][i])) :
-                self.drawEdge(p1, self.points[2][self.neighbors[2][i][j]], "purple", 1, 0)
+                self.drawEdge(p1, self.points[2][self.neighbors[2][i][j]], col, wid, 0)
+
+    def drawIdea(self) :
+        n1 = len(self.points[0])
+        for i in range(len(self.points[2])) :
+            p1 = self.points[2][i]
+            for j in range(len(self.neighbors[2][i])) :
+                if i < n1 and self.neighbors[2][i][j] < n1 :
+                    self.drawEdge(p1, self.points[2][self.neighbors[2][i][j]], "black", 1, 0)
+                elif i >= n1 and self.neighbors[2][i][j] >= n1 :
+                    self.drawEdge(p1, self.points[2][self.neighbors[2][i][j]], "black", 1, 1)
+                else :
+                    self.drawEdge(p1, self.points[2][self.neighbors[2][i][j]], "green", 1, 0)
 
     def createStruct(self) :
         self.neighbors = [[], [], []]
@@ -449,11 +468,11 @@ class triangulationClass() :
     def checkNewEdge(self, e1, e2) :
         return (e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] == e2[1] and e1[1] == e2[0])
 
-    def sewTriangle(self, starter, reverse = 0) :
+    def sewTriangle(self, starter, reverse = 0, colorEdge = "purple") :
         [b_num, a_num] = starter
         a = self.points[2][a_num]
         b = self.points[2][b_num]
-        self.drawEdge(a, b, "red", 3)
+        #self.drawEdge(a, b, colorEdge, 2)
         #self.drawEdge(a, b, "black", 3)
         #self.drawAllPoints()
         #nb = raw_input()
@@ -471,8 +490,8 @@ class triangulationClass() :
             
             #print "EDGE", a_num, b_num, c_num, d_num
             """self.drawPoint(c, "yellow", 3, 0)
-            self.drawPoint(d, "white", 3, 0)
-            nb = raw_input()"""
+            self.drawPoint(d, "white", 3, 0)"""
+            #nb = raw_input()
 
             acb = self.countAngle(a, c, b)
             adb = self.countAngle(a, d, b)
@@ -482,31 +501,32 @@ class triangulationClass() :
             if (c_num != b_num) and ((acb > adb and acb < pi) or (adb >= pi and acb < pi)) : # CB is edge
                 self.addEdgeToPencil([c_num, b_num])
                 
-                aInC = self.neighbors[2][c_num].index(a_num)
-                i = (aInC - 1) % len(self.neighbors[2][c_num])
-                while(1) :
-                    check = self.neighbors[2][c_num][i]
-                    if check != b_num :
-                        self.checkBridge([c_num, check])
-                        
-                        self.neighbors[2][check].remove(c_num)
-                        self.neighbors[2][c_num].pop(i)
-                        i = (i - 1) % len(self.neighbors[2][c_num])
-                    else :
-                        break
+                """if self.testMode :
+                    aInC = self.neighbors[2][c_num].index(a_num)
+                    i = (aInC - 1) % len(self.neighbors[2][c_num])
+                    while(1) :
+                        check = self.neighbors[2][c_num][i]
+                        if check != b_num :
+                            self.checkBridge([c_num, check])
+                            
+                            self.neighbors[2][check].remove(c_num)
+                            self.neighbors[2][c_num].pop(i)
+                            i = (i - 1) % len(self.neighbors[2][c_num])
+                        else :
+                            break
 
-                cInB = self.neighbors[2][b_num].index(c_num)
-                i = (cInB - 1) % len(self.neighbors[2][b_num])
-                while(1) :
-                    check = self.neighbors[2][b_num][i]
-                    if check != a_num :
-                        self.checkBridge([b_num, check])
+                    cInB = self.neighbors[2][b_num].index(c_num)
+                    i = (cInB - 1) % len(self.neighbors[2][b_num])
+                    while(1) :
+                        check = self.neighbors[2][b_num][i]
+                        if check != a_num :
+                            self.checkBridge([b_num, check])
 
-                        self.neighbors[2][check].remove(b_num)
-                        self.neighbors[2][b_num].pop(i)
-                        i = (i - 1) % len(self.neighbors[2][b_num])
-                    else :
-                        break
+                            self.neighbors[2][check].remove(b_num)
+                            self.neighbors[2][b_num].pop(i)
+                            i = (i - 1) % len(self.neighbors[2][b_num])
+                        else :
+                            break"""
 
                 if self.checkNewEdge(starter, [c_num, b_num]) :
                     reverse = 2
@@ -517,31 +537,32 @@ class triangulationClass() :
             elif (a_num != d_num) and (acb < adb and  adb < pi) or (acb >= pi and adb < pi) : # AD is edge
                 self.addEdgeToPencil([a_num, d_num])
 
-                aInD = self.neighbors[2][d_num].index(a_num)
-                i = (aInD - 1) % len(self.neighbors[2][d_num])
-                while(1) :
-                    check = self.neighbors[2][d_num][i]
-                    if check != b_num :
-                        self.checkBridge([d_num, check])
+                """if self.testMode :
+                    aInD = self.neighbors[2][d_num].index(a_num)
+                    i = (aInD - 1) % len(self.neighbors[2][d_num])
+                    while(1) :
+                        check = self.neighbors[2][d_num][i]
+                        if check != b_num :
+                            self.checkBridge([d_num, check])
 
-                        self.neighbors[2][check].remove(d_num)
-                        self.neighbors[2][d_num].pop(i)
-                        i = (i - 1) % len(self.neighbors[2][d_num])
-                    else :
-                        break
+                            self.neighbors[2][check].remove(d_num)
+                            self.neighbors[2][d_num].pop(i)
+                            i = (i - 1) % len(self.neighbors[2][d_num])
+                        else :
+                            break
 
-                bInA = self.neighbors[2][a_num].index(b_num)
-                i = (bInA - 1) % len(self.neighbors[2][a_num])
-                while(1) :
-                    check = self.neighbors[2][a_num][i]
-                    if check != d_num :
-                        self.checkBridge([a_num, check])
+                    bInA = self.neighbors[2][a_num].index(b_num)
+                    i = (bInA - 1) % len(self.neighbors[2][a_num])
+                    while(1) :
+                        check = self.neighbors[2][a_num][i]
+                        if check != d_num :
+                            self.checkBridge([a_num, check])
 
-                        self.neighbors[2][check].remove(a_num)
-                        self.neighbors[2][a_num].pop(i)
-                        i = (i - 1) % len(self.neighbors[2][a_num])
-                    else :
-                        break
+                            self.neighbors[2][check].remove(a_num)
+                            self.neighbors[2][a_num].pop(i)
+                            i = (i - 1) % len(self.neighbors[2][a_num])
+                        else :
+                            break"""
 
                 if self.checkNewEdge(starter, [a_num, d_num]) :
                     reverse = 2
@@ -551,13 +572,13 @@ class triangulationClass() :
                     b = d
             else :
                 break
-            #self.drawEdge(a, b, "purple", 1, 0)
-            #self.drawEdge(a, b, "black", 3, 1)
+            #self.drawEdge(a, b, colorEdge, 3, 0)
+            #self.drawEdge(a, b, "red", 2, 0)
             #self.drawAllPoints()
             #nb = raw_input()
 
         if reverse == 0 :
-            self.sewTriangle([starter[1], starter[0]], 1)
+            self.sewTriangle([starter[1], starter[0]], 1, "blue")
 
     def lineParameters(self, p1, p2) :
         a = p1[1] - p2[1]
@@ -582,8 +603,24 @@ class triangulationClass() :
         y0 = (c2 * a1 - c1 * a2) / (-det)
         return [x0, y0]
 
+    def inSegment(self, src1, src2, checkPoint) :
+        if min(src1[0], src2[0]) <= checkPoint[0] and checkPoint[0] <= max(src1[0], src2[0]) and \
+            min(src1[1], src2[1]) <= checkPoint[1] and checkPoint[1] <= max(src1[1], src2[1]) :
+            return 1
+        else :
+            return 0
+
+    def localizePointInPencil(self, srcPoint, locatablePoint) :
+        #print "len", len(self.neighbors[2][srcPoint])
+        for i in range(len(self.neighbors[2][srcPoint])) :
+            #print self.neighbors[2][srcPoint][i], locatablePoint
+            if self.neighbors[2][srcPoint][i] == locatablePoint :
+                return i
+        return -1
+
     def findNextStarter(self) :
         open = -1
+        num_open = -1
         curBridge = []
         while(open == -1) :
             if len(self.bridges) == 0 :
@@ -603,11 +640,13 @@ class triangulationClass() :
                         break
                 if flag :
                     curBridge = bridge
+                    num_open = i
                     open = num_p
                     break
 
         #self.drawPoint(self.points[2][open], "black", 5, 1)
 
+        # first way
         openPoint = self.points[2][open]
         pencil_p = (open >= len(self.points[0]))
         if pencil_p == 0 :
@@ -643,6 +682,76 @@ class triangulationClass() :
                 minLength = temp
                 num_endStarter = i
 
+        # second way
+        fix = curBridge[1 - num_open]
+        fixPoint = self.points[2][fix]
+
+        num1 = 0
+        num2 = 1
+        
+        self.drawEdge(self.points[2][curBridge[0]], self.points[2][curBridge[1]], "purple", 3)
+        #self.drawPoint(self.points[2][fix], "blue", 5)
+
+        for i in range(len(self.neighbors[2][fix])) :
+            point1 = self.points[2][self.neighbors[2][fix][i]]
+            point2 = self.points[2][self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]]
+
+            #self.drawPoint(point1, "purple", 5)
+            #self.drawPoint(point2, "purple", 5)
+            
+            tempLineParameters = self.lineParameters(point1, point2)
+
+            p0 = self.intersect(bridgeParameters, tempLineParameters)
+
+            if self.inSegment(fixPoint, openPoint, p0) and self.inSegment(point1, point2, p0) :
+                num1 = self.neighbors[2][fix][i]
+                num2 = self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]
+                self.drawEdge(self.points[2][fix], self.points[2][num1], "blue", 3)
+                self.drawEdge(self.points[2][fix], self.points[2][num2], "blue", 3)
+                break
+        
+        self.drawEdge(self.points[2][num1], self.points[2][num2], "red", 3)
+
+        loc1 = self.localizePointInPencil(num2, num1)
+        loc2 = self.localizePointInPencil(num2, fix)
+        if loc1 == -1 :
+            return -1
+        else :
+            step = int(copysign(1, (loc1 - loc2) % len(self.neighbors[2][num2])))
+        print step
+        #nb = raw_input()
+        #print dir
+
+        while(1) :
+            loc_num2_in_num1 = self.localizePointInPencil(num1, num2)
+            temp_next_num1 = self.neighbors[2][num1][(loc_num2_in_num1 - step) % len(self.neighbors[2][num1])]
+            self.drawEdge(self.points[2][num1], self.points[2][temp_next_num1], "pink", 3)
+                
+            loc_num1_in_num2 = self.localizePointInPencil(num2, num1)
+            temp_next_num2 = self.neighbors[2][num2][(loc_num1_in_num2 + step) % len(self.neighbors[2][num2])]
+            self.drawEdge(self.points[2][num2], self.points[2][temp_next_num2], "pink", 3)
+
+            nb = raw_input()
+
+            print temp_next_num1
+            tempLineParameters = self.lineParameters(self.points[2][num1], self.points[2][temp_next_num1])
+            p0 = self.intersect(bridgeParameters, tempLineParameters)
+            if self.inSegment(fixPoint, openPoint, p0) and self.inSegment(self.points[2][num1], self.points[2][temp_next_num1], p0) :
+                self.drawEdge(self.points[2][num1], self.points[2][temp_next_num1], "red", 3)
+                num2 = temp_next_num1
+            else :
+                tempLineParameters = self.lineParameters(self.points[2][num2], self.points[2][temp_next_num2])
+                p0 = self.intersect(bridgeParameters, tempLineParameters)
+                if self.inSegment(fixPoint, openPoint, p0) and self.inSegment(self.points[2][num2], self.points[2][temp_next_num2], p0) :
+                    self.drawEdge(self.points[2][num2], self.points[2][temp_next_num2], "red", 3)
+                    num1 = temp_next_num2
+                else :
+                    break
+            nb = raw_input()
+
+        self.drawEdge(self.points[2][open], self.points[2][num_endStarter], "red", 3, 1)
+        nb = raw_input()
+
         return [open, num_endStarter]
 
     def checkStruct(self) :
@@ -667,12 +776,11 @@ class triangulationClass() :
             for j in range(len(self.points[i])) :
                 self.drawPoint(self.points[i][j], self.color[i], 3, i)
 
-    def makeConcatenation(self) :
+    def makeConcatenation(self, col = "black", wid = 1) :
         #print "self.points[0] =", self.points[0]
         #print "self.points[1] =", self.points[1]
         self.createStruct()
         self.makeMST()
-        
         start = time()        
 
         starter = self.findFirstStarter()
@@ -686,11 +794,12 @@ class triangulationClass() :
             if starter == -1 :
                 break
             self.addEdgeToPencil(starter)
-            self.sewTriangle(starter)
+            self.sewTriangle(starter, 0, "#00CC33")
         
         finish = time()
 
-        self.drawStruct()
+        self.drawStruct(col, wid)
+        #self.drawIdea()
         self.drawAllPoints()
         print "ok"
         return finish - start
@@ -720,15 +829,24 @@ class triangulationClass() :
             #model example in report
             #self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
             #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
+            
+            #circlic seam
+            #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
+            #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
             # big example
             #self.points[0] = [[144, 161], [272, 247], [70, 341], [360, 205], [474, 294], [87, 153], [351, 127], [543, 136], [468, 324], [447, 38], [571, 129], [176, 182], [179, 341], [452, 212], [95, 320], [31, 236], [265, 75], [548, 21], [364, 191], [111, 78], [369, 88], [454, 105], [42, 233], [49, 125], [503, 175], [56, 93], [92, 248], [474, 92], [19, 269], [467, 283], [427, 239], [463, 15], [232, 20], [405, 141], [135, 177], [483, 37], [440, 102], [184, 160], [553, 147], [338, 330], [121, 26], [306, 152], [137, 93], [107, 124], [448, 339], [481, 77], [397, 113], [570, 285], [11, 38], [343, 113], [379, 39], [16, 146], [238, 196], [481, 125], [24, 207], [97, 81], [535, 194], [114, 46], [80, 213], [512, 268], [72, 276], [185, 21], [429, 278], [90, 212], [75, 65], [512, 7], [287, 5], [532, 284], [371, 234], [455, 311], [367, 320], [31, 151], [406, 188], [359, 252], [457, 334], [479, 185], [39, 213], [236, 298], [217, 29], [123, 275], [508, 285], [294, 67], [375, 219], [462, 118], [196, 117], [15, 179], [318, 9], [525, 290], [121, 86], [47, 207], [321, 27], [539, 206], [74, 82], [33, 43], [360, 144], [50, 101], [392, 160], [550, 126], [38, 33], [159, 110]]
             #self.points[1] = [[444, 249], [337, 338], [574, 206], [212, 173], [437, 275], [477, 118], [172, 163], [129, 232], [481, 143], [551, 65], [543, 12], [93, 88], [556, 85], [468, 236], [477, 86], [438, 159], [123, 288], [562, 14], [19, 57], [176, 256], [98, 302], [228, 343], [451, 52], [571, 211], [108, 62], [484, 243], [496, 250], [315, 342], [358, 264], [499, 39], [321, 283], [269, 228], [81, 81], [113, 245], [201, 296], [371, 250], [579, 263], [315, 105], [344, 48], [290, 57], [499, 251], [81, 238], [509, 109], [510, 246], [325, 128], [118, 302], [357, 16], [78, 217], [69, 133], [195, 343], [545, 232], [236, 231], [467, 341], [204, 329], [545, 301], [89, 166], [477, 159], [483, 49], [35, 314], [343, 327], [312, 188], [107, 244], [24, 120], [126, 165], [475, 120], [15, 72], [344, 97], [221, 44], [111, 246], [16, 182], [181, 71], [305, 267], [111, 10], [94, 187], [144, 308], [190, 105], [366, 277], [474, 231], [308, 111], [65, 17], [477, 343], [475, 81], [574, 39], [581, 36], [538, 330], [506, 167], [317, 123], [243, 213], [54, 181], [363, 113], [28, 214], [211, 337], [375, 146], [481, 279], [552, 193], [456, 270], [519, 183], [133, 20], [250, 15], [523, 95]]
-            self.points[0] = [[484, 230], [268, 43], [515, 237], [472, 191], [164, 285], [50, 331], [578, 200], [436, 21], [33, 276], [426, 179], [123, 13], [450, 216], [268, 218], [276, 97], [227, 331], [196, 176], [114, 338], [39, 326], [140, 76], [534, 295]]
-            self.points[1] = [[400, 201], [281, 56], [281, 185], [538, 269], [45, 253], [185, 94], [433, 37], [390, 250], [548, 23], [405, 324], [568, 298], [329, 138], [422, 257], [361, 275], [469, 344], [140, 141], [433, 264], [314, 17], [95, 114], [49, 100]]
+            
+            #self.points[0] = [[484, 230], [268, 43], [515, 237], [472, 191], [164, 285], [50, 331], [578, 200], [436, 21], [33, 276], [426, 179], [123, 13], [450, 216], [268, 218], [276, 97], [227, 331], [196, 176], [114, 338], [39, 326], [140, 76], [534, 295]]
+            #self.points[1] = [[400, 201], [281, 56], [281, 185], [538, 269], [45, 253], [185, 94], [433, 37], [390, 250], [548, 23], [405, 324], [568, 298], [329, 138], [422, 257], [361, 275], [469, 344], [140, 141], [433, 264], [314, 17], [95, 114], [49, 100]]
         
+            #find starter
+            self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
+            self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
+
         elif randomPoints == 1 :
-            nPoints = [20, 20]
+            nPoints = [50, 50]
             for i in range(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -762,39 +880,46 @@ class triangulationClass() :
 
         self.drawAllPoints()
         [sciPyTime, myTime] = self.makeTriangle()
-        print "sciPy", sciPyTime, "my", myTime
+        #print "sciPy", sciPyTime, "my", myTime, "myTest", myTimeTest
+        #print "my", myTime, "myTest", myTimeTest
 
     def experimentTime(self) :
-        fout = open('res3.txt', 'w')
-        nPoints = [10 * x for x in range(1, 91)]
+        fout = open('res.txt', 'w')
+        nPoints = [10 * x for x in range(1, 71)]
         for n in nPoints :
-            while True :
-                self.startTriDone = False
-                self.checkTriDone = False
-                self.firstTri = True
-                self.points = [[], [], []]
-                self.faces = [[], [], []]
-                self.bridges = []
+            sciPyTime = 0
+            myTime = 0
+            numIter = 10
+            for it in range(numIter) :
+                while True :
+                    self.startTriDone = False
+                    self.checkTriDone = False
+                    self.firstTri = True
+                    self.points = [[], [], []]
+                    self.faces = [[], [], []]
+                    self.bridges = []
 
-                self.canvas.delete("all")
-                self.experimentMode = True
+                    self.canvas.delete("all")
+                    self.experimentMode = True
 
-                for i in range(2) :
-                    x = np.random.randint(0, self.width - 20, (n, 1)) + 10
-                    y = np.random.randint(0, self.height - 60, (n, 1)) + 5
-                    self.points[i] = np.concatenate((x, y), axis = 1)
+                    for i in range(2) :
+                        x = np.random.randint(0, self.width - 20, (n, 1)) + 10
+                        y = np.random.randint(0, self.height - 60, (n, 1)) + 5
+                        self.points[i] = np.concatenate((x, y), axis = 1)
 
-                    self.secondTriangle()
+                        self.secondTriangle()
 
-                self.points[0] = self.points[0].tolist()
-                self.points[1] = self.points[1].tolist()
+                    self.points[0] = self.points[0].tolist()
+                    self.points[1] = self.points[1].tolist()
 
 
-                try :
-                    [sciPyTime, myTime] = self.makeTriangle()
-                    print n
-                    fout.write(str(n) + ' ' + str(sciPyTime) + ' ' + str(myTime) + '\n')
-                    break
-                except ValueError :
-                    print "exception"
-                    pass
+                    try :
+                        [sciPy, my] = self.makeTriangle()
+                        sciPyTime += sciPy
+                        myTime += my
+                        break
+                    except :
+                        print "exception"
+                        pass
+            print n
+            fout.write(str(n) + ' ' + str(sciPyTime / numIter) + ' ' + str(myTime / numIter) + '\n')
