@@ -1,6 +1,5 @@
 from Tkinter import *
 
-from math import *
 from random import *
 from time import *
 
@@ -8,7 +7,9 @@ from scipy.spatial import Delaunay
 import numpy as np
 import Queue
 
-EPS = 1e-4
+import geo
+import math
+#import gui
 
 class triangulationClass() :
     root = Tk()
@@ -158,9 +159,6 @@ class triangulationClass() :
             
             line = self.canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill = col, width = wid)
 
-    def getLength(self, p1, p2) :
-        return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** (0.5)
-
     def makeMST(self) :
         edgesMST = [[], []]
         self.tree = [[], []]
@@ -170,7 +168,7 @@ class triangulationClass() :
                 p = [f[0], f[1], f[2], f[0]]
             
                 for j in range(3) :
-                    lenEdge = self.getLength(self.points[i][p[j]], self.points[i][p[j + 1]])
+                    lenEdge = geo.getLength(self.points[i][p[j]], self.points[i][p[j + 1]])
 
                     if edgesMST[i].count((lenEdge, p[j], p[j + 1])) == 0 :
                         edgesMST[i].append((lenEdge, p[j], p[j + 1]))
@@ -252,13 +250,6 @@ class triangulationClass() :
         res = [res[0], res[1] + len(self.points[0])]
         return res
 
-    def countSignAngle(self, p1, p2, p3) :
-        v1 = [p1[0] - p2[0], p1[1] - p2[1]]
-        v2 = [p3[0] - p2[0], p3[1] - p2[1]]
-
-        res = v1[0] * v2[1] - v2[0] * v1[1]
-        return res
-
     def drawStruct(self, col = "black", wid = 1) :
         for i in range(len(self.points[2])) :
             p1 = self.points[2][i]
@@ -305,7 +296,7 @@ class triangulationClass() :
                 for j in range(1, 4) :
                     n = len(temp[tempFace[j]])
                     if n == 0 :
-                        angle = self.countSignAngle(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
+                        angle = geo.countSignAngle(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
                         if angle < 0 :
                             temp[tempFace[j]] = [tempFace[j - 1], tempFace[j + 1]]
                         else :
@@ -344,35 +335,6 @@ class triangulationClass() :
                 for k in range(len(self.neighbors[i][j])) :
                     self.neighbors[2][i * self.nPoints[0] + j].append(self.neighbors[i][j][k] + i * self.nPoints[0])
 
-    def countAngle(self, p1, p2, p3) :
-        l1 = self.getLength(p1, p2)
-        l2 = self.getLength(p2, p3)
-        
-        if l1 * l2 == 0 :
-            return 0
-
-        v1 = [p2[0] - p1[0], p2[1] - p1[1]]
-        v2 = [p2[0] - p3[0], p2[1] - p3[1]]
-
-        sin_arg = (v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2)
-        if abs(abs(sin_arg) - 1) < EPS :
-            x = copysign(1, sin_arg)
-            aSin = asin(x)
-        else :
-            aSin = asin(sin_arg)
-
-        cos_arg = (v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2)
-        if abs(abs(cos_arg) - 1) < EPS :
-            x = copysign(1, cos_arg)
-            aCos = acos(x)
-        else :
-            aCos = acos(cos_arg)
-        
-        if aSin >= 0 :
-            return aCos
-        else :
-            return 2 * pi - aCos
-
     def addPointToPencil(self, where, p_num) :
         if self.neighbors[2][where].count(p_num) > 0 :
             return
@@ -380,7 +342,7 @@ class triangulationClass() :
         numPoints = len(self.neighbors[2][where])
         resAngle = []
         for j in range(numPoints) :
-            res = self.countAngle(self.points[2][self.neighbors[2][where][j]], self.points[2][where], self.points[2][p_num])
+            res = geo.countAngle(self.points[2][self.neighbors[2][where][j]], self.points[2][where], self.points[2][p_num])
             resAngle.append(res)
         
         if len(resAngle) == 0 :
@@ -417,15 +379,15 @@ class triangulationClass() :
             self.drawPoint(c1, "purple", 3, 0)
             self.drawPoint(c2, "purple", 3, 0)"""
             
-            abc1 = self.countAngle(c1, b, a)
-            ac2c1 = self.countAngle(a, c2, c1)
+            abc1 = geo.countAngle(c1, b, a)
+            ac2c1 = geo.countAngle(a, c2, c1)
             
             """print "a, b, c1, c2", a_num, b_num, c1_num, c2_num
             print "abc1 ", abc1, " ac2c1 ", ac2c1
             nb = raw_input()
             self.drawAllPoints()"""
 
-            if abc1 + ac2c1 <= pi or abc1 > pi or ac2c1 > pi:
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else :
                 self.checkBridge([a_num, c1_num])
@@ -447,15 +409,15 @@ class triangulationClass() :
             self.drawPoint(c1, "purple", 3, 0)
             self.drawPoint(c2, "purple", 3, 0)"""
             
-            abc1 = self.countAngle(a, b, c1)
-            ac2c1 = self.countAngle(c1, c2, a)
+            abc1 = geo.countAngle(a, b, c1)
+            ac2c1 = geo.countAngle(c1, c2, a)
             
             """print "one a, b, c1, c2", a_num, b_num, c1_num, c2_num
             print "abc1 ", abc1, " ac2c1 ", ac2c1
             nb = raw_input()
             self.drawAllPoints() """
 
-            if abc1 + ac2c1 <= pi or abc1 > pi or ac2c1 > pi:
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI :
                 break
             else :
                 self.checkBridge([a_num, c1_num])
@@ -493,12 +455,12 @@ class triangulationClass() :
             self.drawPoint(d, "white", 3, 0)"""
             #nb = raw_input()
 
-            acb = self.countAngle(a, c, b)
-            adb = self.countAngle(a, d, b)
+            acb = geo.countAngle(a, c, b)
+            adb = geo.countAngle(a, d, b)
 
             #print "acb ", acb, "adb ", adb
             
-            if (c_num != b_num) and ((acb > adb and acb < pi) or (adb >= pi and acb < pi)) : # CB is edge
+            if (c_num != b_num) and ((acb > adb and acb < geo.PI) or (adb >= geo.PI and acb < geo.PI)) : # CB is edge
                 self.addEdgeToPencil([c_num, b_num])
                 
                 """if self.testMode :
@@ -534,7 +496,7 @@ class triangulationClass() :
                 else :
                     a_num = c_num
                     a = c
-            elif (a_num != d_num) and (acb < adb and  adb < pi) or (acb >= pi and adb < pi) : # AD is edge
+            elif (a_num != d_num) and (acb < adb and  adb < geo.PI) or (acb >= geo.PI and adb < geo.PI) : # AD is edge
                 self.addEdgeToPencil([a_num, d_num])
 
                 """if self.testMode :
@@ -579,36 +541,6 @@ class triangulationClass() :
 
         if reverse == 0 :
             self.sewTriangle([starter[1], starter[0]], 1, "blue")
-
-    def lineParameters(self, p1, p2) :
-        a = p1[1] - p2[1]
-        b = p2[0] - p1[0]
-        c = p1[0] * p2[1] - p2[0] * p1[1]
-        return [a, b, c]
-
-    def perpendicular(self, p, line) :
-        [a, b, c] = line
-        pa = b
-        pb = -a
-        pc = -b * p[0] + a * p[1]
-        return [pa, pb, pc]
-
-    def intersect(self, line1, line2) :
-        [a1, b1, c1] = line1
-        [a2, b2, c2] = line2
-        det = a1 * b2 - a2 * b1
-        if abs(det) < EPS :
-            return [1000, 1000]
-        x0 = (c2 * b1 - c1 * b2) / det
-        y0 = (c2 * a1 - c1 * a2) / (-det)
-        return [x0, y0]
-
-    def inSegment(self, src1, src2, checkPoint) :
-        if min(src1[0], src2[0]) <= checkPoint[0] and checkPoint[0] <= max(src1[0], src2[0]) and \
-            min(src1[1], src2[1]) <= checkPoint[1] and checkPoint[1] <= max(src1[1], src2[1]) :
-            return 1
-        else :
-            return 0
 
     def localizePointInPencil(self, srcPoint, locatablePoint) :
         #print "len", len(self.neighbors[2][srcPoint])
@@ -656,24 +588,24 @@ class triangulationClass() :
             start = 0
             end = len(self.points[0])
 
-        bridgeParameters = self.lineParameters(self.points[2][curBridge[0]], self.points[2][curBridge[1]])
+        bridgeParameters = geo.lineParameters(self.points[2][curBridge[0]], self.points[2][curBridge[1]])
 
         minLength = 1e+10
         num_endStarter = -1;
         for i in range(start, end) :
             tempPoint = self.points[2][i]
             
-            [a, b, c] = self.lineParameters(tempPoint, openPoint)
+            [a, b, c] = geo.lineParameters(tempPoint, openPoint)
 
             midlePoint = [round((tempPoint[0] + openPoint[0]) / 2), round((tempPoint[1] + openPoint[1]) / 2)]
-            [pa, pb, pc] = self.perpendicular(midlePoint, [a, b, c])
+            [pa, pb, pc] = geo.perpendicularParameters(midlePoint, [a, b, c])
 
-            p0 = self.intersect(bridgeParameters, [pa, pb, pc])
+            p0 = geo.intersectLines(bridgeParameters, [pa, pb, pc])
             """print p0
             self.drawPoint(p0, "black", 5, 0)
             nb = raw_input()"""
 
-            temp = self.getLength(p0, openPoint)
+            temp = geo.getLength(p0, openPoint)
             if min(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) <= p0[0] and \
                p0[0] <= max(self.points[2][curBridge[0]][0], self.points[2][curBridge[1]][0]) and \
                min(self.points[2][curBridge[0]][1], self.points[2][curBridge[1]][1]) <= p0[1] and \
@@ -699,11 +631,11 @@ class triangulationClass() :
             #self.drawPoint(point1, "purple", 5)
             #self.drawPoint(point2, "purple", 5)
             
-            tempLineParameters = self.lineParameters(point1, point2)
+            tempLineParameters = geo.lineParameters(point1, point2)
 
-            p0 = self.intersect(bridgeParameters, tempLineParameters)
+            p0 = geo.intersectLines(bridgeParameters, tempLineParameters)
 
-            if self.inSegment(fixPoint, openPoint, p0) and self.inSegment(point1, point2, p0) :
+            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(point1, point2, p0) :
                 num1 = self.neighbors[2][fix][i]
                 num2 = self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]
                 self.drawEdge(self.points[2][fix], self.points[2][num1], "blue", 3)
@@ -717,7 +649,7 @@ class triangulationClass() :
         if loc1 == -1 :
             return -1
         else :
-            step = int(copysign(1, (loc1 - loc2) % len(self.neighbors[2][num2])))
+            step = int(math.copysign(1, (loc1 - loc2) % len(self.neighbors[2][num2])))
         print step
         #nb = raw_input()
         #print dir
@@ -734,15 +666,15 @@ class triangulationClass() :
             nb = raw_input()
 
             print temp_next_num1
-            tempLineParameters = self.lineParameters(self.points[2][num1], self.points[2][temp_next_num1])
-            p0 = self.intersect(bridgeParameters, tempLineParameters)
-            if self.inSegment(fixPoint, openPoint, p0) and self.inSegment(self.points[2][num1], self.points[2][temp_next_num1], p0) :
+            tempLineParameters = geo.lineParameters(self.points[2][num1], self.points[2][temp_next_num1])
+            p0 = geo.intersectLines(bridgeParameters, tempLineParameters)
+            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(self.points[2][num1], self.points[2][temp_next_num1], p0) :
                 self.drawEdge(self.points[2][num1], self.points[2][temp_next_num1], "red", 3)
                 num2 = temp_next_num1
             else :
-                tempLineParameters = self.lineParameters(self.points[2][num2], self.points[2][temp_next_num2])
-                p0 = self.intersect(bridgeParameters, tempLineParameters)
-                if self.inSegment(fixPoint, openPoint, p0) and self.inSegment(self.points[2][num2], self.points[2][temp_next_num2], p0) :
+                tempLineParameters = geo.lineParameters(self.points[2][num2], self.points[2][temp_next_num2])
+                p0 = geo.intersectLines(bridgeParameters, tempLineParameters)
+                if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(self.points[2][num2], self.points[2][temp_next_num2], p0) :
                     self.drawEdge(self.points[2][num2], self.points[2][temp_next_num2], "red", 3)
                     num1 = temp_next_num2
                 else :
@@ -865,8 +797,8 @@ class triangulationClass() :
             self.drawPoint(p2, "black", 3, 1)
             x = 320
             y = 2 * x - 475
-            #line = self.lineParameters(p1, p2)
-            #lineP = self.perpendicular([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], line)
+            #line = geo.lineParameters(p1, p2)
+            #lineP = geo.perpendicular([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], line)
             self.drawEdge([x, y], [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 1, 1)
             
             self.drawPoint([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 3, 1)
