@@ -1,4 +1,4 @@
-from triangulationClass import *
+from triangulation import *
 
-app = triangulationClass(600, 400)
+app = triangulation(600, 400)
 app.root.mainloop()
