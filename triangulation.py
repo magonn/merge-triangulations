@@ -8,7 +8,6 @@ import numpy as np
 import Queue
 
 import geo
-import math
 import draw
 
 class triangulation() :
@@ -46,7 +45,7 @@ class triangulation() :
 
         self.root.bind('<Button-1>', self.clickMouse)
 
-        self.b1 = Button(self.root, bg = "white", fg = "blue", text = "Second points")#, command = self.secondTriangle)
+        self.b1 = Button(self.root, bg = "white", fg = "blue", text = "Second points", command = self.secondTriangle)
         self.b1.place(x = 50, y = _height - 50)        
         
         self.b2 = Button(self.root, bg = "white", fg = "blue", text = "Triangulation", command = self.makeTriangle)
@@ -256,7 +255,7 @@ class triangulation() :
                 for j in range(1, 4) :
                     n = len(temp[tempFace[j]])
                     if n == 0 :
-                        angle = geo.countSignAngle(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
+                        angle = geo.exteriorProd(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
                         if angle < 0 :
                             temp[tempFace[j]] = [tempFace[j - 1], tempFace[j + 1]]
                         else :
@@ -449,9 +448,7 @@ class triangulation() :
             self.sewTriangle([starter[1], starter[0]], 1, "blue")
 
     def localizePointInPencil(self, srcPoint, locatablePoint) :
-        #print "len", len(self.neighbors[2][srcPoint])
         for i in range(len(self.neighbors[2][srcPoint])) :
-            #print self.neighbors[2][srcPoint][i], locatablePoint
             if self.neighbors[2][srcPoint][i] == locatablePoint :
                 return i
         return -1
@@ -524,74 +521,71 @@ class triangulation() :
         fix = curBridge[1 - num_open]
         fixPoint = self.points[2][fix]
 
-        num1 = 0
-        num2 = 1
+        right_num = 0
+        left_num = 1
         
         draw.drawEdge(self.canvas, self.points[2][curBridge[0]], self.points[2][curBridge[1]], "purple", 3)
         #self.drawPoint(self.points[2][fix], "blue", 5)
 
         for i in range(len(self.neighbors[2][fix])) :
-            point1 = self.points[2][self.neighbors[2][fix][i]]
-            point2 = self.points[2][self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]]
-
-            #self.drawPoint(point1, "purple", 5)
-            #self.drawPoint(point2, "purple", 5)
-            
-            tempLineParameters = geo.lineParameters(point1, point2)
+            p1 = self.points[2][self.neighbors[2][fix][i]]
+            p2 = self.points[2][self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]]
+            tempLineParameters = geo.lineParameters(p1, p2)
 
             p0 = geo.intersectLines(bridgeParameters, tempLineParameters)
 
-            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(point1, point2, p0) :
-                num1 = self.neighbors[2][fix][i]
-                num2 = self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]
-                draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][num1], "blue", 3)
-                draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][num2], "blue", 3)
+            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(p1, p2, p0) :
+                right_num = self.neighbors[2][fix][i]
+                left_num = self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]
+                draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][right_num], "blue", 3)
+                draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][left_num], "blue", 3)
                 break
         
-        draw.drawEdge(self.canvas, self.points[2][num1], self.points[2][num2], "red", 3)
+        draw.drawEdge(self.canvas, self.points[2][right_num], self.points[2][left_num], "red", 3)
 
-        loc1 = self.localizePointInPencil(num2, num1)
-        loc2 = self.localizePointInPencil(num2, fix)
+        """loc1 = self.localizePointInPencil(left_num, right_num)
+        loc2 = self.localizePointInPencil(left_num, fix)
         if loc1 == -1 :
             return -1
         else :
-            step = int(math.copysign(1, (loc1 - loc2) % len(self.neighbors[2][num2])))
+            step = geo.sign(loc1 - loc2) % len(self.neighbors[2][left_num])"""
+
         #print step
         #nb = raw_input()
         #print dir
-        print geo.countSignAngle(openPoint, fixPoint, self.points[2][num1])
-        print geo.countSignAngle(openPoint, fixPoint, self.points[2][num2])
-        print "step", step
+        step = geo.sign(geo.exteriorProd(openPoint, fixPoint, self.points[2][right_num]))
+        #print geo.exteriorProd(openPoint, fixPoint, self.points[2][left_num])
+        #print "step", step
         
         while(1) :
-            loc_num2_in_num1 = self.localizePointInPencil(num1, num2)
-            temp_next_num1 = self.neighbors[2][num1][(loc_num2_in_num1 - step) % len(self.neighbors[2][num1])]
-            draw.drawEdge(self.canvas, self.points[2][num1], self.points[2][temp_next_num1], "pink", 3)
+            loc_left_in_right = self.localizePointInPencil(right_num, left_num)
+            next_right = self.neighbors[2][right_num][(loc_left_in_right - step) % len(self.neighbors[2][right_num])]
+            draw.drawEdge(self.canvas, self.points[2][right_num], self.points[2][next_right], "pink", 3)
                 
-            loc_num1_in_num2 = self.localizePointInPencil(num2, num1)
-            temp_next_num2 = self.neighbors[2][num2][(loc_num1_in_num2 + step) % len(self.neighbors[2][num2])]
-            draw.drawEdge(self.canvas, self.points[2][num2], self.points[2][temp_next_num2], "pink", 3)
+            loc_right_in_left = self.localizePointInPencil(left_num, right_num)
+            next_left = self.neighbors[2][left_num][(loc_right_in_left + step) % len(self.neighbors[2][left_num])]
+            draw.drawEdge(self.canvas, self.points[2][left_num], self.points[2][next_left], "pink", 3)
 
-            #nb = raw_input()
+            nb = raw_input()
 
-            #print temp_next_num1
-            tempLineParameters = geo.lineParameters(self.points[2][num1], self.points[2][temp_next_num1])
+            #print next_right_num
+            tempLineParameters = geo.lineParameters(self.points[2][right_num], self.points[2][next_right])
             p0 = geo.intersectLines(bridgeParameters, tempLineParameters)
-            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(self.points[2][num1], self.points[2][temp_next_num1], p0) :
-                draw.drawEdge(self.canvas, self.points[2][num1], self.points[2][temp_next_num1], "red", 3)
-                num2 = temp_next_num1
+            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(self.points[2][right_num], self.points[2][next_right], p0) :
+                draw.drawEdge(self.canvas, self.points[2][right_num], self.points[2][next_right], "red", 3)
+                left_num = next_right
             else :
-                tempLineParameters = geo.lineParameters(self.points[2][num2], self.points[2][temp_next_num2])
+                tempLineParameters = geo.lineParameters(self.points[2][left_num], self.points[2][next_left])
                 p0 = geo.intersectLines(bridgeParameters, tempLineParameters)
-                if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(self.points[2][num2], self.points[2][temp_next_num2], p0) :
-                    draw.drawEdge(self.canvas, self.points[2][num2], self.points[2][temp_next_num2], "red", 3)
-                    num1 = temp_next_num2
+                if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(self.points[2][left_num], self.points[2][next_left], p0) :
+                    draw.drawEdge(self.canvas, self.points[2][left_num], self.points[2][next_left], "red", 3)
+                    right_num = next_left
                 else :
                     break
-            #nb = raw_input()
+            nb = raw_input()
 
         draw.drawEdge(self.canvas, self.points[2][open], self.points[2][num_endStarter], "red", 3, 1)
-        #nb = raw_input()
+        nb = raw_input()
 
         return [open, num_endStarter]
 
@@ -655,7 +649,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam

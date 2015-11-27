@@ -3,10 +3,13 @@ from math import *
 EPS = 1e-4
 PI = pi
 
+def sign(x) :
+    return int(copysign(1, x))
+
 def getLength(p1, p2) :
     return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** (0.5)
 
-def countSignAngle(p1, p2, p3) :
+def exteriorProd(p1, p2, p3) :
     v1 = [p1[0] - p2[0], p1[1] - p2[1]]
     v2 = [p3[0] - p2[0], p3[1] - p2[1]]
 
@@ -25,14 +28,14 @@ def countAngle(p1, p2, p3) :
 
     sin_arg = (v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2)
     if abs(abs(sin_arg) - 1) < EPS :
-        x = copysign(1, sin_arg)
+        x = sign(sin_arg)
         aSin = asin(x)
     else :
         aSin = asin(sin_arg)
 
     cos_arg = (v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2)
     if abs(abs(cos_arg) - 1) < EPS :
-        x = copysign(1, cos_arg)
+        x = sign(cos_arg)
         aCos = acos(x)
     else :
         aCos = acos(cos_arg)
