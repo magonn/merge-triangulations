@@ -466,7 +466,7 @@ class triangulation() :
         bridgeParameters = geo.lineParameters(openPoint, fixPoint)
 
         ### first way
-        if open < len(self.points[0]) :
+        """if open < len(self.points[0]) :
             start = len(self.points[0])
             end = len(self.points[2])
         else :
@@ -482,12 +482,16 @@ class triangulation() :
             
             if radius != -1 and radius < minRadius :
                 minRadius = radius
-                endStarterNum = i
+                endStarterNum = i"""
 
         ### second way
         rightNum = 0
         leftNum = 1
         
+        #self.canvas.delete("all")
+        #self.drawAllPoints()
+        #self.drawStruct()
+
         #draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
         
         ### find left and right neighbors of bridge
@@ -501,7 +505,7 @@ class triangulation() :
 
             p0 = geo.intersectLines(bridgeParameters, lineParameters)
 
-            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(p1, p2, p0) :
+            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(p1, p2, p0) and geo.countAngle(p2, fixPoint, p1) < geo.pi:
                 rightNum = p1Num
                 leftNum = p2Num
                 rightPoint = p1
@@ -511,6 +515,7 @@ class triangulation() :
                 break
         
         #draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][leftNum], "red", 3) # draw intersection line
+        #nb = raw_input()
 
         step = geo.sign(geo.exteriorProd(openPoint, fixPoint, self.points[2][rightNum]))
         
@@ -528,7 +533,8 @@ class triangulation() :
             minRadiusTemp = radius
             endStarterNumTemp = leftNum
 
-        #print "."
+        checkPoints = []
+        print "."
         while(1) :
             ### find next intersection
             locLeftInRight = self.localizePointInPencil(rightNum, leftNum)
@@ -537,14 +543,18 @@ class triangulation() :
             locRightInLeft = self.localizePointInPencil(leftNum, rightNum)
             nextLeftNum = self.neighbors[2][leftNum][(locRightInLeft + step) % len(self.neighbors[2][leftNum])]
             
+            #draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][nextRightNum], "pink", 3)
+            #draw.drawEdge(self.canvas, self.points[2][leftNum], self.points[2][nextLeftNum], "pink", 3)
+            
             if nextRightNum != nextLeftNum :
+                checkPoints.extend(self.neighbors[2][leftNum])
+                checkPoints.extend(self.neighbors[2][rightNum])
                 break
 
             nextNum = nextRightNum
             nextPoint = self.points[2][nextNum]
 
-            #draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][nextNum], "pink", 3)
-            #draw.drawEdge(self.canvas, self.points[2][leftNum], self.points[2][nextNum], "pink", 3)
+            #nb = raw_input()
 
             lineParameters = geo.lineParameters(rightPoint, nextPoint)
             p0 = geo.intersectLines(bridgeParameters, lineParameters)
@@ -572,17 +582,33 @@ class triangulation() :
                         minRadiusTemp = radius
                         endStarterNumTemp = rightNum
                 else :
+                    checkPoints.extend(self.neighbors[2][leftNum])
+                    checkPoints.extend(self.neighbors[2][rightNum])
+                    checkPoints.extend(self.neighbors[2][nextNum])
                     break
+
             #nb = raw_input()
+        print ".."
+
+        for i in xrange(len(checkPoints)) :
+            p = self.points[2][checkPoints[i]]
+            radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, p)
+            if radius != -1 and radius < minRadiusTemp :
+                minRadiusTemp = radius
+                endStarterNumTemp = checkPoints[i]
 
         #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
+        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNumTemp], "black", 3) # next draw starter
         #nb = raw_input()
-
-        if endStarterNum != endStarterNumTemp :
+        
+        """if endStarterNum != endStarterNumTemp :
+            print "FUUUUUUUUUUU"
+            print minRadius, minRadiusTemp
+            print endStarterNum, endStarterNumTemp
             print "self.points[0] =", self.points[0]
-            print "self.points[1] =", self.points[1]            
+            print "self.points[1] =", self.points[1]"""           
 
-        return [open, endStarterNum]
+        return [open, endStarterNumTemp]
 
     """def checkStruct(self) :
         flag = False
@@ -646,7 +672,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 0 # 0 - example, 1 - rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -673,11 +699,11 @@ class triangulation() :
             #self.points[1] = [[400, 201], [281, 56], [281, 185], [538, 269], [45, 253], [185, 94], [433, 37], [390, 250], [548, 23], [405, 324], [568, 298], [329, 138], [422, 257], [361, 275], [469, 344], [140, 141], [433, 264], [314, 17], [95, 114], [49, 100]]
         
             #find starter
-            #self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
-            #self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
+            self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
+            self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
 
         elif randomPoints == 1 :
-            nPoints = [10, 10]
+            nPoints = [200, 200]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -687,27 +713,25 @@ class triangulation() :
 
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
-            print "self.points[0] =", self.points[0]
-            print "self.points[1] =", self.points[1]
         else :
             p1 = [400, 200]
             p2 = [300, 250]
-            self.drawEdge([200, 200], [400, 200], "black", 1, 0)
-            self.drawEdge([300, 250], [400, 200], "black", 1, 1)
-            self.drawPoint(p1, "black", 3, 0)
-            self.drawPoint(p2, "black", 3, 1)
+            draw.drawEdge(self.canvas, [200, 200], [400, 200], "black", 1, 0)
+            draw.drawEdge(self.canvas, [300, 250], [400, 200], "black", 1, 1)
+            draw.drawPoint(self.canvas, p1, "black", 3, 0)
+            draw.drawPoint(self.canvas, p2, "black", 3, 1)
             x = 320
             y = 2 * x - 475
             #line = geo.lineParameters(p1, p2)
             #lineP = geo.perpendicular([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], line)
-            self.drawEdge([x, y], [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 1, 1)
+            draw.drawEdge(self.canvas, [x, y], [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 1, 1)
             
-            self.drawPoint([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 3, 1)
-            self.drawPoint([337, 200], "black", 3, 1)
-            self.drawPoint([250, 150], "black", 3, 1)
-            self.drawPoint([230, 220], "black", 3, 1)
-            self.drawPoint([380, 100], "black", 3, 1)
-            self.drawCircle([337, 200], "black", 400 - 337, 0)
+            draw.drawPoint(self.canvas, [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 3, 1)
+            draw.drawPoint(self.canvas, [337, 200], "black", 3, 1)
+            draw.drawPoint(self.canvas, [250, 150], "black", 3, 1)
+            draw.drawPoint(self.canvas, [230, 220], "black", 3, 1)
+            draw.drawPoint(self.canvas, [380, 100], "black", 3, 1)
+            draw.drawCircle(self.canvas, [337, 200], "black", 400 - 337, 0)
             
             return
 
