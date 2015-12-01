@@ -71,3 +71,16 @@ def intersectLines(line1, line2) :
 def inSegment(p1, p2, checkPoint) :
     return min(p1[0], p2[0]) <= checkPoint[0] and checkPoint[0] <= max(p1[0], p2[0]) and \
         min(p1[1], p2[1]) <= checkPoint[1] and checkPoint[1] <= max(p1[1], p2[1])
+
+def radiusByLineAndPoint(line, openPoint, fixPoint, checkPoint) :
+    [a, b, c] = lineParameters(openPoint, checkPoint)
+
+    midlePoint = [round((openPoint[0] + checkPoint[0]) / 2), round((openPoint[1] + checkPoint[1]) / 2)]
+    [pa, pb, pc] = perpendicularParameters(midlePoint, [a, b, c])
+
+    pIntersect = intersectLines(line, [pa, pb, pc])
+
+    if inSegment(openPoint, fixPoint, pIntersect) :
+        return getLength(pIntersect, checkPoint)
+    else :
+        return -1
