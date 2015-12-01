@@ -488,7 +488,7 @@ class triangulation() :
         rightNum = 0
         leftNum = 1
         
-        draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
+        #draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
         
         ### find left and right neighbors of bridge
         for i in xrange(len(self.neighbors[2][fix])) :
@@ -504,13 +504,13 @@ class triangulation() :
             if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(p1, p2, p0) :
                 rightNum = p1Num
                 leftNum = p2Num
-                rightPoint = self.points[2][rightNum]
-                leftPoint = self.points[2][leftNum]
+                rightPoint = p1
+                leftPoint = p2
                 #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][rightNum], "blue", 3)
                 #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][leftNum], "blue", 3)
                 break
         
-        draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][leftNum], "red", 3) # draw intersection line
+        #draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][leftNum], "red", 3) # draw intersection line
 
         step = geo.sign(geo.exteriorProd(openPoint, fixPoint, self.points[2][rightNum]))
         
@@ -528,13 +528,19 @@ class triangulation() :
             minRadiusTemp = radius
             endStarterNumTemp = leftNum
 
-        print "."
+        #print "."
         while(1) :
             ### find next intersection
             locLeftInRight = self.localizePointInPencil(rightNum, leftNum)
-            locRightInLeft = self.localizePointInPencil(leftNum, rightNum)
+            nextRightNum = self.neighbors[2][rightNum][(locLeftInRight - step) % len(self.neighbors[2][rightNum])] 
             
-            nextNum = self.neighbors[2][rightNum][(locLeftInRight - step) % len(self.neighbors[2][rightNum])] 
+            locRightInLeft = self.localizePointInPencil(leftNum, rightNum)
+            nextLeftNum = self.neighbors[2][leftNum][(locRightInLeft + step) % len(self.neighbors[2][leftNum])]
+            
+            if nextRightNum != nextLeftNum :
+                break
+
+            nextNum = nextRightNum
             nextPoint = self.points[2][nextNum]
 
             #draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][nextNum], "pink", 3)
@@ -544,7 +550,7 @@ class triangulation() :
             p0 = geo.intersectLines(bridgeParameters, lineParameters)
 
             if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(rightPoint, nextPoint, p0) :
-                draw.drawEdge(self.canvas, rightPoint, nextPoint, "red", 3) # draw intersection line
+                #draw.drawEdge(self.canvas, rightPoint, nextPoint, "red", 3) # draw intersection line
                 leftNum = nextNum
                 leftPoint = nextPoint
 
@@ -557,7 +563,7 @@ class triangulation() :
                 p0 = geo.intersectLines(bridgeParameters, lineParameters)
 
                 if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(leftPoint, nextPoint, p0) :
-                    draw.drawEdge(self.canvas, leftPoint, nextPoint, "red", 3) # draw intersection line
+                    #draw.drawEdge(self.canvas, leftPoint, nextPoint, "red", 3) # draw intersection line
                     rightNum = nextNum
                     rightPoint = nextPoint
 
@@ -567,13 +573,14 @@ class triangulation() :
                         endStarterNumTemp = rightNum
                 else :
                     break
-            nb = raw_input()
+            #nb = raw_input()
 
-        print ".."
-        draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
+        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
         #nb = raw_input()
 
-        print endStarterNum == endStarterNumTemp
+        if endStarterNum != endStarterNumTemp :
+            print "self.points[0] =", self.points[0]
+            print "self.points[1] =", self.points[1]            
 
         return [open, endStarterNum]
 
@@ -639,7 +646,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -666,11 +673,11 @@ class triangulation() :
             #self.points[1] = [[400, 201], [281, 56], [281, 185], [538, 269], [45, 253], [185, 94], [433, 37], [390, 250], [548, 23], [405, 324], [568, 298], [329, 138], [422, 257], [361, 275], [469, 344], [140, 141], [433, 264], [314, 17], [95, 114], [49, 100]]
         
             #find starter
-            self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
-            self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
+            #self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
+            #self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
 
         elif randomPoints == 1 :
-            nPoints = [50, 50]
+            nPoints = [10, 10]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -680,6 +687,8 @@ class triangulation() :
 
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
+            print "self.points[0] =", self.points[0]
+            print "self.points[1] =", self.points[1]
         else :
             p1 = [400, 200]
             p2 = [300, 250]
@@ -702,7 +711,7 @@ class triangulation() :
             
             return
 
-        self.drawAllPoints()
+        #self.drawAllPoints()
         [sciPyTime, myTime] = self.makeTriangle()
         #print "sciPy", sciPyTime, "my", myTime, "myTest", myTimeTest
         #print "my", myTime, "myTest", myTimeTest
