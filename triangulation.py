@@ -466,7 +466,7 @@ class triangulation() :
         bridgeParameters = geo.lineParameters(openPoint, fixPoint)
 
         ### first way
-        """if open < len(self.points[0]) :
+        if open < len(self.points[0]) :
             start = len(self.points[0])
             end = len(self.points[2])
         else :
@@ -482,7 +482,7 @@ class triangulation() :
             
             if radius != -1 and radius < minRadius :
                 minRadius = radius
-                endStarterNum = i"""
+                endStarterNum = i
 
         ### second way
         rightNum = 0
@@ -534,7 +534,7 @@ class triangulation() :
             endStarterNumTemp = leftNum
 
         checkPoints = []
-        print "."
+        
         while(1) :
             ### find next intersection
             locLeftInRight = self.localizePointInPencil(rightNum, leftNum)
@@ -559,7 +559,8 @@ class triangulation() :
             lineParameters = geo.lineParameters(rightPoint, nextPoint)
             p0 = geo.intersectLines(bridgeParameters, lineParameters)
 
-            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(rightPoint, nextPoint, p0) :
+            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(rightPoint, nextPoint, p0) and \
+                p0 != rightPoint and p0 != nextPoint :
                 #draw.drawEdge(self.canvas, rightPoint, nextPoint, "red", 3) # draw intersection line
                 leftNum = nextNum
                 leftPoint = nextPoint
@@ -571,8 +572,9 @@ class triangulation() :
             else :
                 lineParameters = geo.lineParameters(leftPoint, nextPoint)
                 p0 = geo.intersectLines(bridgeParameters, lineParameters)
-
-                if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(leftPoint, nextPoint, p0) :
+                
+                if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(leftPoint, nextPoint, p0) and \
+                    p0 != leftPoint and p0 != nextPoint :
                     #draw.drawEdge(self.canvas, leftPoint, nextPoint, "red", 3) # draw intersection line
                     rightNum = nextNum
                     rightPoint = nextPoint
@@ -588,7 +590,7 @@ class triangulation() :
                     break
 
             #nb = raw_input()
-        print ".."
+        #print ".."
 
         for i in xrange(len(checkPoints)) :
             p = self.points[2][checkPoints[i]]
@@ -597,16 +599,16 @@ class triangulation() :
                 minRadiusTemp = radius
                 endStarterNumTemp = checkPoints[i]
 
-        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
         #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNumTemp], "black", 3) # next draw starter
+        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
         #nb = raw_input()
         
-        """if endStarterNum != endStarterNumTemp :
+        if endStarterNum != endStarterNumTemp :
             print "FUUUUUUUUUUU"
             print minRadius, minRadiusTemp
             print endStarterNum, endStarterNumTemp
             print "self.points[0] =", self.points[0]
-            print "self.points[1] =", self.points[1]"""           
+            print "self.points[1] =", self.points[1]        
 
         return [open, endStarterNumTemp]
 
@@ -672,7 +674,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -702,8 +704,10 @@ class triangulation() :
             self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
             self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
 
+            self.points[0] = [[457, 272], [90, 144], [321, 68], [383, 303], [75, 245], [315, 47], [109, 65], [197, 298], [376, 241], [441, 37], [298, 331], [436, 233], [122, 206], [224, 339], [553, 198], [38, 65], [470, 245], [27, 9], [183, 233], [519, 241], [286, 203], [283, 132], [443, 196], [458, 64], [233, 71], [254, 269], [251, 72], [409, 150], [493, 33], [313, 21], [24, 283], [105, 62], [537, 327], [318, 292], [217, 21], [40, 201], [425, 257], [11, 292], [89, 183], [341, 148], [149, 66], [442, 23], [565, 195], [132, 115], [22, 212], [384, 67], [101, 187], [576, 249], [472, 234], [128, 340]]
+            self.points[1] = [[168, 157], [208, 337], [472, 234], [24, 39], [202, 230], [552, 173], [337, 44], [256, 47], [114, 124], [33, 37], [114, 103], [538, 93], [265, 7], [329, 333], [147, 108], [491, 334], [260, 240], [394, 182], [269, 186], [414, 241], [578, 282], [149, 292], [448, 57], [219, 80], [202, 316], [31, 206], [63, 268], [186, 162], [329, 85], [476, 199], [141, 257], [113, 174], [273, 30], [398, 5], [423, 340], [226, 49], [95, 237], [406, 12], [57, 63], [58, 27], [380, 7], [208, 21], [469, 102], [466, 57], [97, 225], [116, 194], [180, 117], [216, 50], [115, 305], [86, 127]]
         elif randomPoints == 1 :
-            nPoints = [200, 200]
+            nPoints = [50, 50]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -713,6 +717,8 @@ class triangulation() :
 
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
+            print "self.points[0] =", self.points[0]
+            print "self.points[1] =", self.points[1]
         else :
             p1 = [400, 200]
             p2 = [300, 250]
