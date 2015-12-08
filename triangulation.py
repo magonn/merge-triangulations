@@ -79,9 +79,6 @@ class triangulation() :
         self.firstTri = False
 
     def makeTriangle(self) :
-        #print self.points[0]
-        #print self.points[1]
-
         sciPyTime = 0
         if self.startTriDone == False :
             self.startTriDone = True
@@ -315,8 +312,6 @@ class triangulation() :
         self.neighbors[2][where].insert(aMin, pNum)
         
     def addEdgeToPencil(self, edge) :
-        #draw.drawEdge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], "grey", 1)
-        #nb = raw_input()
         for i in xrange(2) :
             self.addPointToPencil(edge[i], edge[1 - i])
 
@@ -329,7 +324,6 @@ class triangulation() :
         a = self.points[2][aNum]
         b = self.points[2][bNum]
         while(1) :
-            #print "check pencil of", aNum, bNum
             idx = self.neighbors[2][aNum].index(bNum)
             numPoints = len(self.neighbors[2][aNum])
             c1Num = self.neighbors[2][aNum][(idx - 1) % numPoints]
@@ -346,7 +340,6 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else :
-                #print "delete", aNum, c1Num
                 self.checkBridge([aNum, c1Num])
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -368,7 +361,6 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI :
                 break
             else :
-                #print "delete", aNum, c1Num
                 self.checkBridge([aNum, c1Num])
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -399,7 +391,6 @@ class triangulation() :
             adb = geo.countAngle(a, d, b)
 
             if (cNum != bNum) and ((acb > adb and acb < geo.PI) or (adb >= geo.PI and acb < geo.PI)) : # CB is edge
-                #print "add cb", cNum, bNum
                 self.addEdgeToPencil([cNum, bNum])
 
                 if self.checkNewEdge(starter, [cNum, bNum]) :
@@ -409,7 +400,6 @@ class triangulation() :
                     aNum = cNum
                     a = c
             elif (aNum != dNum) and (acb < adb and  adb < geo.PI) or (acb >= geo.PI and adb < geo.PI) : # AD is edge
-                #print "add ad", aNum, dNum
                 self.addEdgeToPencil([aNum, dNum])
 
                 if self.checkNewEdge(starter, [aNum, dNum]) :
@@ -437,25 +427,6 @@ class triangulation() :
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
         bridgeParameters = geo.lineParameters(openPoint, fixPoint)
-
-        ### first way
-        """if open < len(self.points[0]) :
-            start = len(self.points[0])
-            end = len(self.points[2])
-        else :
-            start = 0
-            end = len(self.points[0])
-
-        minRadius = geo.getLength(openPoint, fixPoint) / 2
-        endStarterNum = -1;
-        for i in xrange(start, end) :
-            tempPoint = self.points[2][i]
-            
-            radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, tempPoint)
-            
-            if radius != -1 and radius < minRadius :
-                minRadius = radius
-                endStarterNum = i"""
 
         ### second way
         rightNum = 0
@@ -594,9 +565,7 @@ class triangulation() :
         #print "bridges", self.bridges
         
         while(len(self.bridges) != 0) :
-            #print "find starter ...."
             starter = self.findNextStarter()
-            #print "starter", starter
             if starter == -1 :
                 continue
             self.addEdgeToPencil(starter)
@@ -620,7 +589,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 0 # 0 - example, 1 - rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam

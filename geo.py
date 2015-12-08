@@ -40,13 +40,13 @@ def countAngle(p1, p2, p3) :
     else :
         aCos = acos(cos_arg)
     
-    if sin_arg >= 0 and cos_arg >= 0 :
+    if sin_arg >= 0 and cos_arg >= 0 : # first quarter
         return (aSin + aCos) / 2.0
-    elif sin_arg >= 0 and cos_arg < 0:
+    elif sin_arg >= 0 and cos_arg < 0 : # second quarter
         return ((pi - aSin) + aCos) / 2.0
-    elif sin_arg < 0 and cos_arg < 0:
+    elif sin_arg < 0 and cos_arg < 0 : # third quarter
         return ((pi - aSin) + (2 * pi - aCos)) / 2.0
-    else :
+    else : # fourth quarter
         return 2 * pi + (aSin - aCos) / 2.0
 
 def lineParameters(p1, p2) :
