@@ -56,6 +56,9 @@ class triangulation() :
 
         self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
         self.b4.place(x = 450, y = _height - 50)
+        
+        self.b5 = Button(self.root, bg = "white", fg = "blue", text = "Errors", command = self.experimentErrors)
+        self.b5.place(x = 550, y = _height - 50)
     
     def clickMouse(self, event) :
         if self.startTriDone == False :
@@ -175,8 +178,8 @@ class triangulation() :
         self.makeTriangle()
         
         self.makeMST()
-        self.drawMST(0, "black", 2)
-        self.drawMST(1, "black", 2)
+        self.drawMST(0, "red", 2)
+        self.drawMST(1, "red", 2)
         self.drawAllPoints()
         self.MSTmode = False      
 
@@ -312,6 +315,8 @@ class triangulation() :
         self.neighbors[2][where].insert(aMin, pNum)
         
     def addEdgeToPencil(self, edge) :
+        #draw.drawEdge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], "grey", 1)
+        #nb = raw_input()
         for i in xrange(2) :
             self.addPointToPencil(edge[i], edge[1 - i])
 
@@ -324,6 +329,7 @@ class triangulation() :
         a = self.points[2][aNum]
         b = self.points[2][bNum]
         while(1) :
+            #print "check pencil of", aNum, bNum
             idx = self.neighbors[2][aNum].index(bNum)
             numPoints = len(self.neighbors[2][aNum])
             c1Num = self.neighbors[2][aNum][(idx - 1) % numPoints]
@@ -340,6 +346,7 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else :
+                #print "delete", aNum, c1Num
                 self.checkBridge([aNum, c1Num])
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -361,6 +368,7 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI :
                 break
             else :
+                #print "delete", aNum, c1Num
                 self.checkBridge([aNum, c1Num])
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -372,13 +380,9 @@ class triangulation() :
         return (e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] == e2[1] and e1[1] == e2[0])
 
     def sewTriangle(self, starter, reverse = 0, colorEdge = "purple") :
-        [bNum, aNum] = starter
+        [aNum, bNum] = starter
         a = self.points[2][aNum]
         b = self.points[2][bNum]
-        #self.drawEdge(a, b, colorEdge, 2)
-        #self.drawEdge(a, b, "black", 3)
-        #self.drawAllPoints()
-        #nb = raw_input()
         
         while(1) :
             self.deleteWrongEdges([aNum, bNum])
@@ -391,17 +395,11 @@ class triangulation() :
             dNum = self.neighbors[2][bNum][(idx2 + 1) % len(self.neighbors[2][bNum])]
             d = self.points[2][dNum]
             
-            #print "EDGE", aNum, bNum, cNum, dNum
-            #self.drawPoint(c, "yellow", 3, 0)
-            #self.drawPoint(d, "white", 3, 0)
-            #nb = raw_input()
-
             acb = geo.countAngle(a, c, b)
             adb = geo.countAngle(a, d, b)
 
-            #print "acb ", acb, "adb ", adb
-            
             if (cNum != bNum) and ((acb > adb and acb < geo.PI) or (adb >= geo.PI and acb < geo.PI)) : # CB is edge
+                #print "add cb", cNum, bNum
                 self.addEdgeToPencil([cNum, bNum])
 
                 if self.checkNewEdge(starter, [cNum, bNum]) :
@@ -411,6 +409,7 @@ class triangulation() :
                     aNum = cNum
                     a = c
             elif (aNum != dNum) and (acb < adb and  adb < geo.PI) or (acb >= geo.PI and adb < geo.PI) : # AD is edge
+                #print "add ad", aNum, dNum
                 self.addEdgeToPencil([aNum, dNum])
 
                 if self.checkNewEdge(starter, [aNum, dNum]) :
@@ -421,11 +420,7 @@ class triangulation() :
                     b = d
             else :
                 break
-            #self.drawEdge(a, b, colorEdge, 3, 0)
-            #self.drawEdge(a, b, "red", 2, 0)
-            #self.drawAllPoints()
-            #nb = raw_input()
-
+            
         if reverse == 0 :
             self.sewTriangle([starter[1], starter[0]], 1, "blue")
 
@@ -466,7 +461,7 @@ class triangulation() :
         rightNum = 0
         leftNum = 1
         
-        draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
+        #draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
         
         ### find left and right neighbors of bridge
         for i in xrange(len(self.neighbors[2][fix])) :
@@ -493,7 +488,7 @@ class triangulation() :
 
         step = geo.sign(geo.exteriorProd(openPoint, fixPoint, self.points[2][rightNum]))
         
-        minRadiusTemp = geo.getLength(openPoint, fixPoint) / 2
+        minRadiusTemp = 1e+4
         endStarterNumTemp = -1
 
         ### update minRadius with left and right neighbours
@@ -573,34 +568,12 @@ class triangulation() :
                 endStarterNumTemp = checkPoints[i]
 
         #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
-        draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNumTemp], "black", 3) # next draw starter
+        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNumTemp], "black", 3) # next draw starter
         #nb = raw_input()
         
-        """if endStarterNum != endStarterNumTemp :
-            print "FUUUUUUUUUUU"
-            print minRadius, minRadiusTemp
-            print endStarterNum, endStarterNumTemp
-            print "self.points[0] =", self.points[0]
-            print "self.points[1] =", self.points[1]"""      
-
+        if endStarterNumTemp == -1 :
+            return -1
         return [open, endStarterNumTemp]
-
-    """def checkStruct(self) :
-        flag = False
-        for i in xrange(len(self.points[2])) :
-            for j in xrange(len(self.neighbors[2][i])) :
-                pNum = self.neighbors[2][i][j]
-                if self.neighbors[2][pNum].count(i) != 1 :
-                    flag = True
-                    print "bad struct"
-                    print i, self.neighbors[2][i]
-                    print pNum, self.neighbors[2][pNum]
-                    break
-
-        if flag :
-            print "There are errors"
-            print self.points[0]
-            print self.points[1]"""
 
     def drawAllPoints(self) :
         for i in xrange(2) :
@@ -623,9 +596,9 @@ class triangulation() :
         while(len(self.bridges) != 0) :
             #print "find starter ...."
             starter = self.findNextStarter()
-            #print "starter"
+            #print "starter", starter
             if starter == -1 :
-                break
+                continue
             self.addEdgeToPencil(starter)
             self.sewTriangle(starter, 0, "#00CC33")
         
@@ -647,7 +620,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -677,10 +650,12 @@ class triangulation() :
             self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
             self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
 
+            # it doesn't work, there are intersections
             self.points[0] = [[457, 272], [90, 144], [321, 68], [383, 303], [75, 245], [315, 47], [109, 65], [197, 298], [376, 241], [441, 37], [298, 331], [436, 233], [122, 206], [224, 339], [553, 198], [38, 65], [470, 245], [27, 9], [183, 233], [519, 241], [286, 203], [283, 132], [443, 196], [458, 64], [233, 71], [254, 269], [251, 72], [409, 150], [493, 33], [313, 21], [24, 283], [105, 62], [537, 327], [318, 292], [217, 21], [40, 201], [425, 257], [11, 292], [89, 183], [341, 148], [149, 66], [442, 23], [565, 195], [132, 115], [22, 212], [384, 67], [101, 187], [576, 249], [472, 234], [128, 340]]
             self.points[1] = [[168, 157], [208, 337], [472, 234], [24, 39], [202, 230], [552, 173], [337, 44], [256, 47], [114, 124], [33, 37], [114, 103], [538, 93], [265, 7], [329, 333], [147, 108], [491, 334], [260, 240], [394, 182], [269, 186], [414, 241], [578, 282], [149, 292], [448, 57], [219, 80], [202, 316], [31, 206], [63, 268], [186, 162], [329, 85], [476, 199], [141, 257], [113, 174], [273, 30], [398, 5], [423, 340], [226, 49], [95, 237], [406, 12], [57, 63], [58, 27], [380, 7], [208, 21], [469, 102], [466, 57], [97, 225], [116, 194], [180, 117], [216, 50], [115, 305], [86, 127]]
+
         elif randomPoints == 1 :
-            nPoints = [50, 50]
+            nPoints = [20, 20]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -690,8 +665,8 @@ class triangulation() :
 
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
-            print "self.points[0] =", self.points[0]
-            print "self.points[1] =", self.points[1]
+            #print "self.points[0] =", self.points[0]
+            #print "self.points[1] =", self.points[1]
         else :
             p1 = [400, 200]
             p2 = [300, 250]
@@ -759,3 +734,35 @@ class triangulation() :
                         pass
             print n
             fout.write(str(n) + ' ' + str(sciPyTime / numIter) + ' ' + str(myTime / numIter) + '\n')
+
+    def experimentErrors(self) :
+        flag = True
+        n = 10
+        while flag :
+            self.startTriDone = False
+            self.checkTriDone = False
+            self.firstTri = True
+            self.points = [[], [], []]
+            self.faces = [[], [], []]
+            self.bridges = []
+
+            self.canvas.delete("all")
+            self.experimentMode = True
+
+            for i in xrange(2) :
+                x = np.random.randint(0, self.width - 20, (n, 1)) + 10
+                y = np.random.randint(0, self.height - 60, (n, 1)) + 5
+                self.points[i] = np.concatenate((x, y), axis = 1)
+
+                self.secondTriangle()
+
+            self.points[0] = self.points[0].tolist()
+            self.points[1] = self.points[1].tolist()
+
+
+            try :
+                self.makeTriangle()
+            except :
+                print "self.points[0] =", self.points[0]
+                print "self.points[1] =", self.points[1]
+                flag = False

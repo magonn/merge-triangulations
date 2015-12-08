@@ -19,7 +19,7 @@ def exteriorProd(p1, p2, p3) :
 def countAngle(p1, p2, p3) :
     l1 = getLength(p1, p2)
     l2 = getLength(p2, p3)
-        
+    
     if l1 * l2 == 0 :
         return 0
 
@@ -39,11 +39,15 @@ def countAngle(p1, p2, p3) :
         aCos = acos(x)
     else :
         aCos = acos(cos_arg)
-        
-    if aSin >= 0 :
-        return aCos
+    
+    if sin_arg >= 0 and cos_arg >= 0 :
+        return (aSin + aCos) / 2.0
+    elif sin_arg >= 0 and cos_arg < 0:
+        return ((pi - aSin) + aCos) / 2.0
+    elif sin_arg < 0 and cos_arg < 0:
+        return ((pi - aSin) + (2 * pi - aCos)) / 2.0
     else :
-        return 2 * pi - aCos
+        return 2 * pi + (aSin - aCos) / 2.0
 
 def lineParameters(p1, p2) :
     a = p1[1] - p2[1]
