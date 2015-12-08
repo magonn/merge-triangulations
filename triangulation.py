@@ -57,7 +57,6 @@ class triangulation() :
         self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
         self.b4.place(x = 450, y = _height - 50)
     
-
     def clickMouse(self, event) :
         if self.startTriDone == False :
             getX = event.x_root
@@ -177,6 +176,7 @@ class triangulation() :
         
         self.makeMST()
         self.drawMST(0, "black", 2)
+        self.drawMST(1, "black", 2)
         self.drawAllPoints()
         self.MSTmode = False      
 
@@ -318,7 +318,7 @@ class triangulation() :
     def checkBridge(self, edge) :
         if self.mst.count(edge) > 0 or self.mst.count([edge[1], edge[0]]) > 0 :
             self.bridges.append(edge)
-
+        
     def deleteWrongEdges(self, starter, reverse = 0) :
         [aNum, bNum] = starter
         a = self.points[2][aNum]
@@ -436,29 +436,7 @@ class triangulation() :
         return -1
 
     def findNextStarter(self) :
-        ### find bridge
-        open = -1
-        fix = -1
-        
-        while(open == -1) :
-            if len(self.bridges) == 0 :
-                return -1
-
-            bridge = self.bridges.pop(0)
-            
-            for i in xrange(2) :
-                pNum = bridge[i]
-                pencil_p = (pNum >= len(self.points[0]))
-                flag = True
-                for j in xrange(len(self.neighbors[2][pNum])) :
-                    pencil_temp = (self.neighbors[2][pNum][j] >= len(self.points[0]))
-                    if pencil_p != pencil_temp :
-                        flag = False
-                        break
-                if flag :
-                    open = pNum
-                    fix = bridge[1 - i]
-                    break
+        [fix, open] = self.bridges.pop(0)
 
         ### define open and fix points
         openPoint = self.points[2][open]
@@ -466,7 +444,7 @@ class triangulation() :
         bridgeParameters = geo.lineParameters(openPoint, fixPoint)
 
         ### first way
-        if open < len(self.points[0]) :
+        """if open < len(self.points[0]) :
             start = len(self.points[0])
             end = len(self.points[2])
         else :
@@ -482,17 +460,13 @@ class triangulation() :
             
             if radius != -1 and radius < minRadius :
                 minRadius = radius
-                endStarterNum = i
+                endStarterNum = i"""
 
         ### second way
         rightNum = 0
         leftNum = 1
         
-        #self.canvas.delete("all")
-        #self.drawAllPoints()
-        #self.drawStruct()
-
-        #draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
+        draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
         
         ### find left and right neighbors of bridge
         for i in xrange(len(self.neighbors[2][fix])) :
@@ -590,8 +564,7 @@ class triangulation() :
                     break
 
             #nb = raw_input()
-        #print ".."
-
+        
         for i in xrange(len(checkPoints)) :
             p = self.points[2][checkPoints[i]]
             radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, p)
@@ -599,16 +572,16 @@ class triangulation() :
                 minRadiusTemp = radius
                 endStarterNumTemp = checkPoints[i]
 
-        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNumTemp], "black", 3) # next draw starter
         #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
+        draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNumTemp], "black", 3) # next draw starter
         #nb = raw_input()
         
-        if endStarterNum != endStarterNumTemp :
+        """if endStarterNum != endStarterNumTemp :
             print "FUUUUUUUUUUU"
             print minRadius, minRadiusTemp
             print endStarterNum, endStarterNumTemp
             print "self.points[0] =", self.points[0]
-            print "self.points[1] =", self.points[1]        
+            print "self.points[1] =", self.points[1]"""      
 
         return [open, endStarterNumTemp]
 
@@ -674,7 +647,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 0 # 0 - example, 1 - rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
