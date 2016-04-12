@@ -7,6 +7,7 @@ from time import *
 from scipy.spatial import Delaunay
 import numpy as np
 import Queue
+import sets
 
 import geo
 
@@ -315,9 +316,9 @@ class triangulation() :
         for i in xrange(2) :
             self.addPointToPencil(edge[i], edge[1 - i])
 
-    def checkBridge(self, edge) :
+    def checkBridge(self, edge, breaker) :
         if self.mst.count(edge) > 0 or self.mst.count([edge[1], edge[0]]) > 0 :
-            self.bridges.append(edge)
+            self.bridges.append([edge[0], edge[1], breaker])
         
     def deleteWrongEdges(self, starter, reverse = 0) :
         [aNum, bNum] = starter
@@ -340,7 +341,7 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else :
-                self.checkBridge([aNum, c1Num])
+                self.checkBridge([aNum, c1Num], bNum)
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -361,7 +362,7 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI :
                 break
             else :
-                self.checkBridge([aNum, c1Num])
+                self.checkBridge([aNum, c1Num], bNum)
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -421,130 +422,38 @@ class triangulation() :
         return -1
 
     def findNextStarter(self) :
-        [fix, open] = self.bridges.pop(0)
+        [fix, open, breaker] = self.bridges.pop(0)
 
-        ### define open and fix points
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
         bridgeParameters = geo.lineParameters(openPoint, fixPoint)
+        center = [(openPoint[0] + fixPoint[0]) / 2, (openPoint[1] + fixPoint[1]) / 2]
+        radiusBridge = geo.getLength(center, openPoint)
 
-        ### second way
-        rightNum = 0
-        leftNum = 1
-        
-        #draw.drawEdge(self.canvas, openPoint, fixPoint, "purple", 3) # draw bridge
-        
-        ### find left and right neighbors of bridge
-        for i in xrange(len(self.neighbors[2][fix])) :
-            p1Num = self.neighbors[2][fix][i]
-            p1 = self.points[2][p1Num]
-            p2Num = self.neighbors[2][fix][(i + 1) % len(self.neighbors[2][fix])]
-            p2 = self.points[2][p2Num]
-            
-            lineParameters = geo.lineParameters(p1, p2)
+        checkPoints = Queue.Queue()
+        checkPoints.put(breaker)
 
-            p0 = geo.intersectLines(bridgeParameters, lineParameters)
+        visited = set()
 
-            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(p1, p2, p0) and geo.countAngle(p2, fixPoint, p1) < geo.pi:
-                rightNum = p1Num
-                leftNum = p2Num
-                rightPoint = p1
-                leftPoint = p2
-                #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][rightNum], "blue", 3)
-                #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][leftNum], "blue", 3)
-                break
-        
-        #draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][leftNum], "red", 3) # draw intersection line
-        #nb = raw_input()
+        minRadius = 1e+4
+        endStarterNum = -1
 
-        step = geo.sign(geo.exteriorProd(openPoint, fixPoint, self.points[2][rightNum]))
-        
-        minRadiusTemp = 1e+4
-        endStarterNumTemp = -1
+        while not checkPoints.empty() :
+            nP = checkPoints.get()
+            p = self.points[2][nP]
 
-        ### update minRadius with left and right neighbours
-        radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, rightPoint)
-        if radius != -1 and radius < minRadiusTemp :
-            minRadiusTemp = radius
-            endStarterNumTemp = rightNum
+            if nP not in visited :
+                visited.add(nP)
+                radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, p)
+                if radius != -1 and radius < minRadius :
+                    minRadius = radius
+                    endStarterNum = nP
 
-        radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, leftPoint)
-        if radius != -1 and radius < minRadiusTemp :
-            minRadiusTemp = radius
-            endStarterNumTemp = leftNum
+                for test in self.neighbors[2][nP] :
+                    if geo.getLength(center, self.points[2][test]) < radiusBridge :
+                        checkPoints.put(test)
 
-        checkPoints = []
-        
-        while(1) :
-            ### find next intersection
-            locLeftInRight = self.localizePointInPencil(rightNum, leftNum)
-            nextRightNum = self.neighbors[2][rightNum][(locLeftInRight - step) % len(self.neighbors[2][rightNum])] 
-            
-            locRightInLeft = self.localizePointInPencil(leftNum, rightNum)
-            nextLeftNum = self.neighbors[2][leftNum][(locRightInLeft + step) % len(self.neighbors[2][leftNum])]
-            
-            #draw.drawEdge(self.canvas, self.points[2][rightNum], self.points[2][nextRightNum], "pink", 3)
-            #draw.drawEdge(self.canvas, self.points[2][leftNum], self.points[2][nextLeftNum], "pink", 3)
-            
-            if nextRightNum != nextLeftNum :
-                checkPoints.extend(self.neighbors[2][leftNum])
-                checkPoints.extend(self.neighbors[2][rightNum])
-                break
-
-            nextNum = nextRightNum
-            nextPoint = self.points[2][nextNum]
-
-            #nb = raw_input()
-
-            lineParameters = geo.lineParameters(rightPoint, nextPoint)
-            p0 = geo.intersectLines(bridgeParameters, lineParameters)
-
-            if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(rightPoint, nextPoint, p0) and \
-                p0 != rightPoint and p0 != nextPoint :
-                #draw.drawEdge(self.canvas, rightPoint, nextPoint, "red", 3) # draw intersection line
-                leftNum = nextNum
-                leftPoint = nextPoint
-
-                radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, leftPoint)
-                if radius != -1 and radius < minRadiusTemp :
-                    minRadiusTemp = radius
-                    endStarterNumTemp = leftNum
-            else :
-                lineParameters = geo.lineParameters(leftPoint, nextPoint)
-                p0 = geo.intersectLines(bridgeParameters, lineParameters)
-                
-                if geo.inSegment(fixPoint, openPoint, p0) and geo.inSegment(leftPoint, nextPoint, p0) and \
-                    p0 != leftPoint and p0 != nextPoint :
-                    #draw.drawEdge(self.canvas, leftPoint, nextPoint, "red", 3) # draw intersection line
-                    rightNum = nextNum
-                    rightPoint = nextPoint
-
-                    radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, rightPoint)
-                    if radius != -1 and radius < minRadiusTemp :
-                        minRadiusTemp = radius
-                        endStarterNumTemp = rightNum
-                else :
-                    checkPoints.extend(self.neighbors[2][leftNum])
-                    checkPoints.extend(self.neighbors[2][rightNum])
-                    checkPoints.extend(self.neighbors[2][nextNum])
-                    break
-
-            #nb = raw_input()
-        
-        for i in xrange(len(checkPoints)) :
-            p = self.points[2][checkPoints[i]]
-            radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, p)
-            if radius != -1 and radius < minRadiusTemp :
-                minRadiusTemp = radius
-                endStarterNumTemp = checkPoints[i]
-
-        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNum], "yellow", 3) # next draw starter
-        #draw.drawEdge(self.canvas, openPoint, self.points[2][endStarterNumTemp], "black", 3) # next draw starter
-        #nb = raw_input()
-        
-        if endStarterNumTemp == -1 :
-            return -1
-        return [open, endStarterNumTemp]
+        return [open, endStarterNum]
 
     def drawAllPoints(self) :
         for i in xrange(2) :
@@ -566,6 +475,7 @@ class triangulation() :
         
         while(len(self.bridges) != 0) :
             starter = self.findNextStarter()
+            
             if starter == -1 :
                 continue
             self.addEdgeToPencil(starter)
@@ -589,12 +499,12 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
-            #self.points[0] = [[147, 93], [226, 45], [253, 130], [149, 197], [78, 54]]
-            #self.points[1] = [[391, 124], [478, 133], [432, 181]]
+            self.points[0] = [[147, 93], [226, 45], [253, 130], [149, 197], [78, 54]]
+            self.points[1] = [[391, 124], [478, 133], [432, 181]]
             
             #example starter in report
             #self.points[0] = [[208, 180], [151, 210], [175, 126], [252, 134], [236, 227]]
@@ -615,13 +525,9 @@ class triangulation() :
             #self.points[0] = [[484, 230], [268, 43], [515, 237], [472, 191], [164, 285], [50, 331], [578, 200], [436, 21], [33, 276], [426, 179], [123, 13], [450, 216], [268, 218], [276, 97], [227, 331], [196, 176], [114, 338], [39, 326], [140, 76], [534, 295]]
             #self.points[1] = [[400, 201], [281, 56], [281, 185], [538, 269], [45, 253], [185, 94], [433, 37], [390, 250], [548, 23], [405, 324], [568, 298], [329, 138], [422, 257], [361, 275], [469, 344], [140, 141], [433, 264], [314, 17], [95, 114], [49, 100]]
         
-            #find starter
-            self.points[0] = [[103, 167], [164, 82], [273, 178], [324, 89], [406, 161]]
-            self.points[1] = [[200, 143], [196, 213], [307, 132], [356, 190], [453, 97], [462, 220]]
-
             # it doesn't work, there are intersections
-            self.points[0] = [[457, 272], [90, 144], [321, 68], [383, 303], [75, 245], [315, 47], [109, 65], [197, 298], [376, 241], [441, 37], [298, 331], [436, 233], [122, 206], [224, 339], [553, 198], [38, 65], [470, 245], [27, 9], [183, 233], [519, 241], [286, 203], [283, 132], [443, 196], [458, 64], [233, 71], [254, 269], [251, 72], [409, 150], [493, 33], [313, 21], [24, 283], [105, 62], [537, 327], [318, 292], [217, 21], [40, 201], [425, 257], [11, 292], [89, 183], [341, 148], [149, 66], [442, 23], [565, 195], [132, 115], [22, 212], [384, 67], [101, 187], [576, 249], [472, 234], [128, 340]]
-            self.points[1] = [[168, 157], [208, 337], [472, 234], [24, 39], [202, 230], [552, 173], [337, 44], [256, 47], [114, 124], [33, 37], [114, 103], [538, 93], [265, 7], [329, 333], [147, 108], [491, 334], [260, 240], [394, 182], [269, 186], [414, 241], [578, 282], [149, 292], [448, 57], [219, 80], [202, 316], [31, 206], [63, 268], [186, 162], [329, 85], [476, 199], [141, 257], [113, 174], [273, 30], [398, 5], [423, 340], [226, 49], [95, 237], [406, 12], [57, 63], [58, 27], [380, 7], [208, 21], [469, 102], [466, 57], [97, 225], [116, 194], [180, 117], [216, 50], [115, 305], [86, 127]]
+            #self.points[0] = [[457, 272], [90, 144], [321, 68], [383, 303], [75, 245], [315, 47], [109, 65], [197, 298], [376, 241], [441, 37], [298, 331], [436, 233], [122, 206], [224, 339], [553, 198], [38, 65], [470, 245], [27, 9], [183, 233], [519, 241], [286, 203], [283, 132], [443, 196], [458, 64], [233, 71], [254, 269], [251, 72], [409, 150], [493, 33], [313, 21], [24, 283], [105, 62], [537, 327], [318, 292], [217, 21], [40, 201], [425, 257], [11, 292], [89, 183], [341, 148], [149, 66], [442, 23], [565, 195], [132, 115], [22, 212], [384, 67], [101, 187], [576, 249], [472, 234], [128, 340]]
+            #self.points[1] = [[168, 157], [208, 337], [472, 234], [24, 39], [202, 230], [552, 173], [337, 44], [256, 47], [114, 124], [33, 37], [114, 103], [538, 93], [265, 7], [329, 333], [147, 108], [491, 334], [260, 240], [394, 182], [269, 186], [414, 241], [578, 282], [149, 292], [448, 57], [219, 80], [202, 316], [31, 206], [63, 268], [186, 162], [329, 85], [476, 199], [141, 257], [113, 174], [273, 30], [398, 5], [423, 340], [226, 49], [95, 237], [406, 12], [57, 63], [58, 27], [380, 7], [208, 21], [469, 102], [466, 57], [97, 225], [116, 194], [180, 117], [216, 50], [115, 305], [86, 127]]
 
         elif randomPoints == 1 :
             nPoints = [20, 20]
