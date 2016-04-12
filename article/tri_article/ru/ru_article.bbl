@@ -1,0 +1,60 @@
+\begin{thebibliography}{1}
+\def\selectlanguageifdefined#1{
+\expandafter\ifx\csname date#1\endcsname\relax
+\else\language\csname l@#1\endcsname\fi}
+\ifx\undefined\url\def\url#1{{\small #1}}\else\fi
+\ifx\undefined\BibUrl\def\BibUrl#1{\url{#1}}\else\fi
+\ifx\undefined\BibAnnote\long\def\BibAnnote#1{(#1)}\else\fi
+\ifx\undefined\BibEmph\def\BibEmph#1{\emph{#1}}\else\fi
+
+\bibitem{Lee}
+\selectlanguageifdefined{russian}
+D.T.~Lee, B.J.~Schachter. Two algorithms for constructing a Delaunay
+  triangulation~// International Journal of Computer and Information Science.
+\newblock vol. 9, no.3.
+\newblock 1980.
+\newblock {С.}~219--242.
+
+\bibitem{Dyshkant}
+\selectlanguageifdefined{russian}
+N.~Dyshkant. Comparison of Point Clouds Acquired by 3D scanner~// Lecture Notes
+  in Computer Science: Discrete Geometry for Computer Imagery.
+\newblock vol.7749.
+\newblock 2013.
+\newblock {С.}~47--58.
+
+\bibitem{Kirkpatrick}
+\selectlanguageifdefined{russian}
+D.G.~Kirpatrick. Efficient computation of continuous skeletons~// Proceedings
+  of the 20th Annual IEEE Symposium on FOCS.
+\newblock 1979.
+\newblock {С.}~18--27.
+
+\bibitem{Chazelle}
+\selectlanguageifdefined{russian}
+B.~Chazelle. An optimal algorithm for intersecting three-dimensional convex
+  polyhedrons~// SIAM J.Comput.
+\newblock vol.21.
+\newblock 1992.
+\newblock {с.}~671–696.
+
+\bibitem{Shamos}
+\selectlanguageifdefined{russian}
+M.I.~Shamos, D.~Hoey. Closest-point Problems~// Proceedings of the 16th Annual
+  IEEE Symposium on FOCS.
+\newblock 1975.
+\newblock {С.}~151--162.
+
+\bibitem{Preparata}
+\selectlanguageifdefined{russian}
+Preparata~Franco~P., Shamos~Michael~I. Computational Geometry: An Introduction.
+\newblock New York, NY, USA: Springer-Verlag New York, Inc., 1985.
+
+\bibitem{Skvortsov}
+\selectlanguageifdefined{russian}
+A.В.~Скворцов. Триангуляция Делоне и ее
+  применение.
+\newblock Москва: Издательство Томского
+  университета, 2002.
+
+\end{thebibliography}
