@@ -58,7 +58,7 @@ class triangulation() :
         self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
         self.b4.place(x = 450, y = _height - 50)
         
-        self.b5 = Button(self.root, bg = "white", fg = "blue", text = "Errors", command = self.experimentErrors)
+        self.b5 = Button(self.root, bg = "white", fg = "blue", text = "Errors", command = self.experimentTime)
         self.b5.place(x = 550, y = _height - 50)
     
     def clickMouse(self, event) :
@@ -80,6 +80,9 @@ class triangulation() :
         self.firstTri = False
 
     def makeTriangle(self) :
+    	#print self.points[0]
+    	#print self.points[1]
+
         sciPyTime = 0
         if self.startTriDone == False :
             self.startTriDone = True
@@ -92,7 +95,8 @@ class triangulation() :
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
 
-                #self.drawTriangle(self.points[i], self.faces[i], self.color[i], 1, i)
+                draw.drawTriangle(self.canvas, self.points[i], self.faces[i], self.color[i], 1, i)
+
                 #self.drawAllPoints()
 
         if self.checkTriDone == False :
@@ -112,7 +116,7 @@ class triangulation() :
             sciPyTime = finish1 - start1
 
             if self.MSTmode == False :
-                draw.drawTriangle(self.canvas, self.points[2], self.faces[2], "green", 5, 2)
+                #draw.drawTriangle(self.canvas, self.points[2], self.faces[2], "green", 5, 2)
                 self.drawAllPoints()
                 #self.drawTriangle(self.points[2], self.faces[2], "purple", 2, 0)
 
@@ -163,6 +167,7 @@ class triangulation() :
                             treeId[j] = newId
 
             #self.drawMST(i, "black", 2)
+            #nb = raw_input()
 
         self.mst = []
         n1 = len(self.points[0])
@@ -341,7 +346,10 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else :
-                self.checkBridge([aNum, c1Num], bNum)
+            	if abc1 > ac2c1 :
+                	self.checkBridge([aNum, c1Num], bNum)
+                else :
+                	self.checkBridge([aNum, c1Num], c2Num)
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -362,7 +370,10 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI :
                 break
             else :
-                self.checkBridge([aNum, c1Num], bNum)
+                if abc1 > ac2c1 :
+                	self.checkBridge([aNum, c1Num], bNum)
+                else :
+                	self.checkBridge([aNum, c1Num], c2Num)
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -423,6 +434,8 @@ class triangulation() :
 
     def findNextStarter(self) :
         [fix, open, breaker] = self.bridges.pop(0)
+        draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
+        draw.drawPoint(self.canvas, self.points[2][breaker], "green", 3)
 
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
@@ -453,6 +466,8 @@ class triangulation() :
                     if geo.getLength(center, self.points[2][test]) < radiusBridge :
                         checkPoints.put(test)
 
+        draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
+        nb = raw_input()
         return [open, endStarterNum]
 
     def drawAllPoints(self) :
@@ -483,8 +498,8 @@ class triangulation() :
         
         finish = time()
 
-        self.drawStruct(col, wid)
-        self.drawAllPoints()
+        #self.drawStruct(col, wid)
+        #self.drawAllPoints()
         print "ok"
         return finish - start
         
@@ -503,8 +518,8 @@ class triangulation() :
 
         if randomPoints == 0 :
             # separeted triangle seam
-            self.points[0] = [[147, 93], [226, 45], [253, 130], [149, 197], [78, 54]]
-            self.points[1] = [[391, 124], [478, 133], [432, 181]]
+            #self.points[0] = [[147, 93], [226, 45], [253, 130], [149, 197], [78, 54]]
+            #self.points[1] = [[391, 124], [478, 133], [432, 181]]
             
             #example starter in report
             #self.points[0] = [[208, 180], [151, 210], [175, 126], [252, 134], [236, 227]]
@@ -515,8 +530,8 @@ class triangulation() :
             #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
             
             #circlic seam
-            #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
-            #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
+            self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
+            self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
             # big example
             #self.points[0] = [[144, 161], [272, 247], [70, 341], [360, 205], [474, 294], [87, 153], [351, 127], [543, 136], [468, 324], [447, 38], [571, 129], [176, 182], [179, 341], [452, 212], [95, 320], [31, 236], [265, 75], [548, 21], [364, 191], [111, 78], [369, 88], [454, 105], [42, 233], [49, 125], [503, 175], [56, 93], [92, 248], [474, 92], [19, 269], [467, 283], [427, 239], [463, 15], [232, 20], [405, 141], [135, 177], [483, 37], [440, 102], [184, 160], [553, 147], [338, 330], [121, 26], [306, 152], [137, 93], [107, 124], [448, 339], [481, 77], [397, 113], [570, 285], [11, 38], [343, 113], [379, 39], [16, 146], [238, 196], [481, 125], [24, 207], [97, 81], [535, 194], [114, 46], [80, 213], [512, 268], [72, 276], [185, 21], [429, 278], [90, 212], [75, 65], [512, 7], [287, 5], [532, 284], [371, 234], [455, 311], [367, 320], [31, 151], [406, 188], [359, 252], [457, 334], [479, 185], [39, 213], [236, 298], [217, 29], [123, 275], [508, 285], [294, 67], [375, 219], [462, 118], [196, 117], [15, 179], [318, 9], [525, 290], [121, 86], [47, 207], [321, 27], [539, 206], [74, 82], [33, 43], [360, 144], [50, 101], [392, 160], [550, 126], [38, 33], [159, 110]]
@@ -528,6 +543,9 @@ class triangulation() :
             # it doesn't work, there are intersections
             #self.points[0] = [[457, 272], [90, 144], [321, 68], [383, 303], [75, 245], [315, 47], [109, 65], [197, 298], [376, 241], [441, 37], [298, 331], [436, 233], [122, 206], [224, 339], [553, 198], [38, 65], [470, 245], [27, 9], [183, 233], [519, 241], [286, 203], [283, 132], [443, 196], [458, 64], [233, 71], [254, 269], [251, 72], [409, 150], [493, 33], [313, 21], [24, 283], [105, 62], [537, 327], [318, 292], [217, 21], [40, 201], [425, 257], [11, 292], [89, 183], [341, 148], [149, 66], [442, 23], [565, 195], [132, 115], [22, 212], [384, 67], [101, 187], [576, 249], [472, 234], [128, 340]]
             #self.points[1] = [[168, 157], [208, 337], [472, 234], [24, 39], [202, 230], [552, 173], [337, 44], [256, 47], [114, 124], [33, 37], [114, 103], [538, 93], [265, 7], [329, 333], [147, 108], [491, 334], [260, 240], [394, 182], [269, 186], [414, 241], [578, 282], [149, 292], [448, 57], [219, 80], [202, 316], [31, 206], [63, 268], [186, 162], [329, 85], [476, 199], [141, 257], [113, 174], [273, 30], [398, 5], [423, 340], [226, 49], [95, 237], [406, 12], [57, 63], [58, 27], [380, 7], [208, 21], [469, 102], [466, 57], [97, 225], [116, 194], [180, 117], [216, 50], [115, 305], [86, 127]]
+
+            #self.points[0] = [[245, 156], [246, 224], [322, 188], [356, 116], [401, 192], [372, 240], [316, 280], [459, 246], [467, 166]]
+            #self.points[1] = [[303, 233], [323, 157], [422, 150], [480, 107], [490, 212], [514, 271], [412, 268], [411, 222]]
 
         elif randomPoints == 1 :
             nPoints = [20, 20]
@@ -571,13 +589,16 @@ class triangulation() :
 
     def experimentTime(self) :
         fout = open('res.txt', 'w')
-        nPoints = [10 * x for x in xrange(1, 71)]
+        nPoints = [1000 * x for x in xrange(1, 10)]
+        counter = 0
         for n in nPoints :
             sciPyTime = 0
             myTime = 0
-            numIter = 10
+            numIter = 1
             for it in xrange(numIter) :
                 while True :
+                    counter = counter + 1
+                    print counter
                     self.startTriDone = False
                     self.checkTriDone = False
                     self.firstTri = True
@@ -589,8 +610,14 @@ class triangulation() :
                     self.experimentMode = True
 
                     for i in xrange(2) :
-                        x = np.random.randint(0, self.width - 20, (n, 1)) + 10
+                    	if i == 1 :
+                        	x = np.random.randint(0, round((self.width - 20)/2 - 5), (n, 1)) + 10
+                        else :
+                        	x = np.random.randint(round((self.width - 20)/2 + 5), self.width - 20, (n, 1)) + 10
+
+                        #x = np.random.randint(0, self.width - 20, (n, 1)) + 10
                         y = np.random.randint(0, self.height - 60, (n, 1)) + 5
+
                         self.points[i] = np.concatenate((x, y), axis = 1)
 
                         self.secondTriangle()
