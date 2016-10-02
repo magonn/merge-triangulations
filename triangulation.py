@@ -28,8 +28,6 @@ class triangulation() :
     bridges = []
     fictiveEdges = []
     
-    testMode = False
-
     color = ["black", "black", "black"]
     
     def __init__(self, _width = 600, _height = 400) :
@@ -119,11 +117,14 @@ class triangulation() :
                 self.drawTriangle(self.points[2], self.faces[2], "purple", 2, 0)"""
 
         if self.MSTmode == False :
-            #myTime = self.makeConcatenation("yellow", 3)
-            myTime = self.makeConcatenation()
-            #self.testMode = True
-            #myTimeTest = self.makeConcatenation()
-            return [sciPyTime, myTime]#, myTimeTest]
+            bridgeTime = self.makeConcatenation()
+            #nb = raw_input()
+        
+            self.bridges = []
+            self.fictiveEdges = []
+
+            fictiveTime = self.makeConcatenation(useBridge = False)
+            return [sciPyTime, bridgeTime, fictiveTime]
             
     def drawMST(self, num, col = "black", wid = 1) :
         for j in xrange(len(self.tree[num])) :
@@ -293,7 +294,7 @@ class triangulation() :
 
     def addPointToPencil(self, where, pNum) :
         if self.neighbors[2][where].count(pNum) > 0 :
-            return
+            return False
 
         numPoints = len(self.neighbors[2][where])
         resAngle = []
@@ -307,10 +308,13 @@ class triangulation() :
             aMin = resAngle.index(min(resAngle))
         
         self.neighbors[2][where].insert(aMin, pNum)
+        return True
         
     def addEdgeToPencil(self, edge) :
+        flag = True
         for i in xrange(2) :
-            self.addPointToPencil(edge[i], edge[1 - i])
+            flag = flag and self.addPointToPencil(edge[i], edge[1 - i])
+        return flag
 
     def checkBridge(self, edge, breaker) :
         if self.mst.count(edge) > 0 or self.mst.count([edge[1], edge[0]]) > 0 :
@@ -339,6 +343,15 @@ class triangulation() :
             else :
                 self.checkBridge([aNum, c1Num], bNum)
                 
+                #centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
+                #radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
+
+                #centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
+                #radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
+                
+                #print radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
+                self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
+                
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -361,6 +374,8 @@ class triangulation() :
             else :
                 self.checkBridge([aNum, c1Num], bNum)
                 
+                self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
+
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -419,28 +434,25 @@ class triangulation() :
                 return i
         return -1
 
-    def findNextStarter(self, bridge = True) :
-        if bridge :
+    def findNextStarter(self, useBridge = True) :
+        if useBridge :
             [fix, open, breaker] = self.bridges.pop(0)
-            print fix, open, breaker
-        #else :
-        #    [fix, open, breaker] = self.fictiveEdges.pop(0)
-
-        draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
-        draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
-        self.drawAllPoints()
-        nb = raw_input()
+            center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
+        else :
+            [fix, open, third, breaker] = self.fictiveEdges.pop(0)
+            center = geo.centerCircle(self.points[2][open], self.points[2][fix], self.points[2][third])
 
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
 
-        if bridge :
-            center = [(openPoint[0] + fixPoint[0]) / 2, (openPoint[1] + fixPoint[1]) / 2]
-            radiusBridge = geo.getLength(center, openPoint)
-            bridgeParameters = geo.lineParameters(openPoint, fixPoint)
-        #else :
-            #center = geo.centerCircle
-
+        radiusBridge = geo.getLength(center, openPoint)
+        bridgeParameters = geo.lineParameters(openPoint, center)
+        
+        #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
+        #draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
+        #draw.drawCircle(self.canvas, center, "blue", wid = radiusBridge)
+        #self.drawAllPoints()
+        
         checkPoints = Queue.Queue()
         checkPoints.put(breaker)
 
@@ -455,7 +467,7 @@ class triangulation() :
 
             if nP not in visited :
                 visited.add(nP)
-                radius = geo.radiusByLineAndPoint(bridgeParameters, openPoint, fixPoint, p)
+                radius = geo.radiusByLineAndPoint(bridgeParameters, radiusBridge, center, openPoint, p)
                 if radius != -1 and radius < minRadius :
                     minRadius = radius
                     endStarterNum = nP
@@ -465,6 +477,7 @@ class triangulation() :
                         checkPoints.put(test)
 
         #draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
+        #nb = raw_input()
         return [open, endStarterNum]
 
     def drawAllPoints(self) :
@@ -472,9 +485,9 @@ class triangulation() :
             for p in self.points[i] :
                 draw.drawPoint(self.canvas, p, self.color[i], 3, i)
 
-    def makeConcatenation(self, col = "black", wid = 1) :
-        print "self.points[0] =", self.points[0]
-        print "self.points[1] =", self.points[1]
+    def makeConcatenation(self, col = "black", wid = 1, useBridge = True) :
+        #print "self.points[0] =", self.points[0]
+        #print "self.points[1] =", self.points[1]
         
         self.createStruct()
         self.makeMST()
@@ -485,13 +498,15 @@ class triangulation() :
         
         self.sewTriangle(starter)
         
-        while(len(self.bridges) != 0) :
-            starter = self.findNextStarter(bridge = True)
+        while((useBridge and len(self.bridges) != 0) or (not useBridge and len(self.fictiveEdges) != 0)) :
+            starter = self.findNextStarter(useBridge)
             
             if starter == -1 :
                 continue
-            self.addEdgeToPencil(starter)
-            self.sewTriangle(starter, 0, "#00CC33")
+            if self.addEdgeToPencil(starter) :
+                self.sewTriangle(starter, 0, "#00CC33")
+            else :
+                print useBridge, "edge exists"
         
         finish = time()
 
@@ -508,6 +523,7 @@ class triangulation() :
         self.points = [[], [], []]
         self.faces = [[], [], []]
         self.bridges = []
+        self.fictiveEdges = []
 
         self.canvas.delete("all")
         self.experimentMode = True
@@ -546,7 +562,7 @@ class triangulation() :
             #self.points[1] = [[303, 233], [323, 157], [422, 150], [480, 107], [490, 212], [514, 271], [412, 268], [411, 222]]
 
         else :
-            nPoints = [20, 20]
+            nPoints = [100, 100]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -558,9 +574,12 @@ class triangulation() :
             self.points[1] = self.points[1].tolist()
 
         self.drawAllPoints()
-        [sciPyTime, myTime] = self.makeTriangle()
         
-        print "sciPy", sciPyTime, "my", myTime
+        [sciPyTime, bridgeTime, fictiveTime] = self.makeTriangle()
+        
+        print "sciPy", sciPyTime
+        print "my   ", bridgeTime
+        print "new  ", fictiveTime
 
     def experimentTime(self) :
         fout = open('res.txt', 'w')
