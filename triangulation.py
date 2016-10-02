@@ -26,12 +26,11 @@ class triangulation() :
     tree = [[], []]
     mst = []
     bridges = []
-
+    fictiveEdges = []
+    
     testMode = False
 
-    #color = ["#FA8072", "#87CEEB", "#00CC33"]
     color = ["black", "black", "black"]
-    colorMST = ["#FF6600", "#000099"]
     
     def __init__(self, _width = 600, _height = 400) :
         self.root = Tk()
@@ -46,19 +45,19 @@ class triangulation() :
 
         self.root.bind('<Button-1>', self.clickMouse)
 
-        self.b1 = Button(self.root, bg = "white", fg = "blue", text = "Second points", command = self.secondTriangle)
+        self.b1 = Button(self.root, bg = "white", fg = "black", text = "Second points set", command = self.secondTriangle)
         self.b1.place(x = 50, y = _height - 50)        
         
-        self.b2 = Button(self.root, bg = "white", fg = "blue", text = "Triangulation", command = self.makeTriangle)
+        self.b2 = Button(self.root, bg = "white", fg = "black", text = "Triangulation", command = self.makeTriangle)
         self.b2.place(x = 200, y = _height - 50)        
         
-        self.b3 = Button(self.root, bg = "white", fg = "blue", text = "MST", command = self.MST)
+        self.b3 = Button(self.root, bg = "white", fg = "black", text = "MST", command = self.MST)
         self.b3.place(x = 350, y = _height - 50)
 
-        self.b4 = Button(self.root, bg = "white", fg = "blue", text = "Experiment", command = self.experiment)
-        self.b4.place(x = 450, y = _height - 50)
+        self.b4 = Button(self.root, bg = "white", fg = "black", text = "Experiment", command = self.experiment)
+        self.b4.place(x = 425, y = _height - 50)
         
-        self.b5 = Button(self.root, bg = "white", fg = "blue", text = "Errors", command = self.experimentTime)
+        self.b5 = Button(self.root, bg = "white", fg = "black", text = "Errors", command = self.experimentErrors)
         self.b5.place(x = 550, y = _height - 50)
     
     def clickMouse(self, event) :
@@ -95,14 +94,14 @@ class triangulation() :
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
 
-                draw.drawTriangle(self.canvas, self.points[i], self.faces[i], self.color[i], 1, i)
-
-                #self.drawAllPoints()
+                #draw.drawTriangle(self.canvas, self.points[i], self.faces[i], self.color[i], 1, i)
+            
+            #self.drawAllPoints()
 
         if self.checkTriDone == False :
             self.checkTriDone = True
             
-            start1 = time()
+            start = time()
 
             self.points[2] = []
             self.points[2].extend(self.points[0])
@@ -112,13 +111,12 @@ class triangulation() :
             self.faces[2] = tri.vertices
             self.neighFaces[2] = tri.neighbors
 
-            finish1 = time()
-            sciPyTime = finish1 - start1
+            sciPyTime = time() - start
 
-            if self.MSTmode == False :
-                #draw.drawTriangle(self.canvas, self.points[2], self.faces[2], "green", 5, 2)
+            """if self.MSTmode == False :
+                draw.drawTriangle(self.canvas, self.points[2], self.faces[2], "green", 5, 2)
                 self.drawAllPoints()
-                #self.drawTriangle(self.points[2], self.faces[2], "purple", 2, 0)
+                self.drawTriangle(self.points[2], self.faces[2], "purple", 2, 0)"""
 
         if self.MSTmode == False :
             #myTime = self.makeConcatenation("yellow", 3)
@@ -167,8 +165,7 @@ class triangulation() :
                             treeId[j] = newId
 
             #self.drawMST(i, "black", 2)
-            #nb = raw_input()
-
+            
         self.mst = []
         n1 = len(self.points[0])
         
@@ -198,15 +195,9 @@ class triangulation() :
         pTwoStarter = [self.points[0][twoStarter[0]], self.points[1][twoStarter[1]]]
         fixPoint = (pTwoStarter[0][0] < pTwoStarter[1][0]) or (pTwoStarter[0][0] == pTwoStarter[1][0] and (pTwoStarter[0][1] > pTwoStarter[1][1]))
         
-        #draw Empty W circle
-        #p0 = pTwoStarter[fixPoint]
-        #p1 = pTwoStarter[1 - fixPoint]
-        #rad = ((p0[0] - p1[0]) ** 2 + (p0[1] - p1[1]) ** 2) / (2 * (p0[0] - p1[0]))
-        #self.drawCircle([p0[0] - rad, p0[1]], "black", rad, 0)
-
-        endFixPoint = twoStarter[1 - fixPoint]
         pEndFixPoint = pTwoStarter[1 - fixPoint]
-
+        endFixPoint = twoStarter[1 - fixPoint]
+        
         minLength = 1e+10
         for j in xrange(len(self.points[1 - fixPoint])) :
             p = self.points[1 - fixPoint][j]
@@ -346,10 +337,8 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else :
-            	if abc1 > ac2c1 :
-                	self.checkBridge([aNum, c1Num], bNum)
-                else :
-                	self.checkBridge([aNum, c1Num], c2Num)
+                self.checkBridge([aNum, c1Num], bNum)
+                
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -370,10 +359,8 @@ class triangulation() :
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI :
                 break
             else :
-                if abc1 > ac2c1 :
-                	self.checkBridge([aNum, c1Num], bNum)
-                else :
-                	self.checkBridge([aNum, c1Num], c2Num)
+                self.checkBridge([aNum, c1Num], bNum)
+                
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -432,16 +419,27 @@ class triangulation() :
                 return i
         return -1
 
-    def findNextStarter(self) :
-        [fix, open, breaker] = self.bridges.pop(0)
+    def findNextStarter(self, bridge = True) :
+        if bridge :
+            [fix, open, breaker] = self.bridges.pop(0)
+            print fix, open, breaker
+        #else :
+        #    [fix, open, breaker] = self.fictiveEdges.pop(0)
+
         draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
-        draw.drawPoint(self.canvas, self.points[2][breaker], "green", 3)
+        draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
+        self.drawAllPoints()
+        nb = raw_input()
 
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
-        bridgeParameters = geo.lineParameters(openPoint, fixPoint)
-        center = [(openPoint[0] + fixPoint[0]) / 2, (openPoint[1] + fixPoint[1]) / 2]
-        radiusBridge = geo.getLength(center, openPoint)
+
+        if bridge :
+            center = [(openPoint[0] + fixPoint[0]) / 2, (openPoint[1] + fixPoint[1]) / 2]
+            radiusBridge = geo.getLength(center, openPoint)
+            bridgeParameters = geo.lineParameters(openPoint, fixPoint)
+        #else :
+            #center = geo.centerCircle
 
         checkPoints = Queue.Queue()
         checkPoints.put(breaker)
@@ -466,8 +464,7 @@ class triangulation() :
                     if geo.getLength(center, self.points[2][test]) < radiusBridge :
                         checkPoints.put(test)
 
-        draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
-        nb = raw_input()
+        #draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
         return [open, endStarterNum]
 
     def drawAllPoints(self) :
@@ -476,8 +473,9 @@ class triangulation() :
                 draw.drawPoint(self.canvas, p, self.color[i], 3, i)
 
     def makeConcatenation(self, col = "black", wid = 1) :
-        #print "self.points[0] =", self.points[0]
-        #print "self.points[1] =", self.points[1]
+        print "self.points[0] =", self.points[0]
+        print "self.points[1] =", self.points[1]
+        
         self.createStruct()
         self.makeMST()
         start = time()        
@@ -486,10 +484,9 @@ class triangulation() :
         self.addEdgeToPencil(starter)
         
         self.sewTriangle(starter)
-        #print "bridges", self.bridges
         
         while(len(self.bridges) != 0) :
-            starter = self.findNextStarter()
+            starter = self.findNextStarter(bridge = True)
             
             if starter == -1 :
                 continue
@@ -498,9 +495,10 @@ class triangulation() :
         
         finish = time()
 
-        #self.drawStruct(col, wid)
-        #self.drawAllPoints()
+        self.drawStruct(col, wid)
+        self.drawAllPoints()
         print "ok"
+
         return finish - start
         
     def experiment(self) :
@@ -514,7 +512,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 0 # 0 - example, 1 - rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -547,7 +545,7 @@ class triangulation() :
             #self.points[0] = [[245, 156], [246, 224], [322, 188], [356, 116], [401, 192], [372, 240], [316, 280], [459, 246], [467, 166]]
             #self.points[1] = [[303, 233], [323, 157], [422, 150], [480, 107], [490, 212], [514, 271], [412, 268], [411, 222]]
 
-        elif randomPoints == 1 :
+        else :
             nPoints = [20, 20]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
@@ -558,34 +556,11 @@ class triangulation() :
 
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
-            #print "self.points[0] =", self.points[0]
-            #print "self.points[1] =", self.points[1]
-        else :
-            p1 = [400, 200]
-            p2 = [300, 250]
-            draw.drawEdge(self.canvas, [200, 200], [400, 200], "black", 1, 0)
-            draw.drawEdge(self.canvas, [300, 250], [400, 200], "black", 1, 1)
-            draw.drawPoint(self.canvas, p1, "black", 3, 0)
-            draw.drawPoint(self.canvas, p2, "black", 3, 1)
-            x = 320
-            y = 2 * x - 475
-            #line = geo.lineParameters(p1, p2)
-            #lineP = geo.perpendicular([(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], line)
-            draw.drawEdge(self.canvas, [x, y], [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 1, 1)
-            
-            draw.drawPoint(self.canvas, [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], "black", 3, 1)
-            draw.drawPoint(self.canvas, [337, 200], "black", 3, 1)
-            draw.drawPoint(self.canvas, [250, 150], "black", 3, 1)
-            draw.drawPoint(self.canvas, [230, 220], "black", 3, 1)
-            draw.drawPoint(self.canvas, [380, 100], "black", 3, 1)
-            draw.drawCircle(self.canvas, [337, 200], "black", 400 - 337, 0)
-            
-            return
 
-        #self.drawAllPoints()
+        self.drawAllPoints()
         [sciPyTime, myTime] = self.makeTriangle()
-        #print "sciPy", sciPyTime, "my", myTime, "myTest", myTimeTest
-        #print "my", myTime, "myTest", myTimeTest
+        
+        print "sciPy", sciPyTime, "my", myTime
 
     def experimentTime(self) :
         fout = open('res.txt', 'w')
@@ -661,10 +636,10 @@ class triangulation() :
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
 
-
             try :
                 self.makeTriangle()
             except :
+                print "!!! ERROR !!!"
                 print "self.points[0] =", self.points[0]
                 print "self.points[1] =", self.points[1]
                 flag = False

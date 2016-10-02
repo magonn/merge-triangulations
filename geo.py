@@ -88,3 +88,12 @@ def radiusByLineAndPoint(line, openPoint, fixPoint, checkPoint) :
         return getLength(pIntersect, checkPoint)
     else :
         return -1
+
+def centerCircle(p1, p2, p3) :
+    line1 = lineParameters(p1, p2)
+    perLine1 = perpendicularParameters([round((p1[0] + p2[0]) / 2), round((p1[1] + p2[1]) / 2)], line1)
+
+    line2 = lineParameters(p2, p3)
+    perLine2 = perpendicularParameters([round((p2[0] + p3[0]) / 2), round((p2[1] + p3[1]) / 2)], line2)
+
+    return intersectLines(perLine1, perLine2)
