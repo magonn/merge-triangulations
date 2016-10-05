@@ -19,7 +19,6 @@ class triangulation() :
     MSTmode = False
 
     points = [[], [], []]
-    nPoints = [[], [], []]
     faces = [[], [], []]
     neighFaces = [[], [], []]
 
@@ -229,8 +228,7 @@ class triangulation() :
         self.neighbors = [[], [], []]
 
         for i in xrange(2) :
-            self.nPoints[i] = len(self.points[i])
-            temp = [[] for x in xrange(self.nPoints[i])]
+            temp = [[] for x in xrange(len(self.points[i]))]
             flag = [False for x in xrange(len(self.faces[i]))]
             
             queue = Queue.Queue()
@@ -284,13 +282,12 @@ class triangulation() :
 
             self.neighbors[i] = temp
 
-        self.nPoints[2] = self.nPoints[0] + self.nPoints[1]
-        self.neighbors[2] = [[] for i in xrange(self.nPoints[2])]
+        self.neighbors[2] = [[] for i in xrange(len(self.points[2]))]
 
         for i in xrange(2) :
-            for j in xrange(self.nPoints[i]) :
+            for j in xrange(len(self.points[i])) :
                 for k in xrange(len(self.neighbors[i][j])) :
-                    self.neighbors[2][i * self.nPoints[0] + j].append(self.neighbors[i][j][k] + i * self.nPoints[0])
+                    self.neighbors[2][i * len(self.points[0]) + j].append(self.neighbors[i][j][k] + i * len(self.points[0]))
 
     def addPointToPencil(self, where, pNum) :
         if self.neighbors[2][where].count(pNum) > 0 :
