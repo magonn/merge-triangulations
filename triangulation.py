@@ -27,8 +27,6 @@ class triangulation() :
     bridges = []
     fictiveEdges = []
     
-    color = ["black", "black", "black"]
-    
     def __init__(self, _width = 600, _height = 400) :
         self.root = Tk()
         self.width = _width
@@ -70,7 +68,7 @@ class triangulation() :
 
             p = [x, y]
             self.points[self.firstTri == False].append(p)
-            draw.drawPoint(self.canvas, p, self.color[self.firstTri == False], 3, self.firstTri == False)
+            draw.drawPoint(self.canvas, p, "black", 3, self.firstTri == False)
     
     def secondTriangle(self) :
         self.firstTri = False
@@ -91,7 +89,7 @@ class triangulation() :
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
 
-                #draw.drawTriangle(self.canvas, self.points[i], self.faces[i], self.color[i], 1, i)
+                #draw.drawTriangle(self.canvas, self.points[i], self.faces[i], "black", 1, i)
             
             #self.drawAllPoints()
 
@@ -480,7 +478,7 @@ class triangulation() :
     def drawAllPoints(self) :
         for i in xrange(2) :
             for p in self.points[i] :
-                draw.drawPoint(self.canvas, p, self.color[i], 3, i)
+                draw.drawPoint(self.canvas, p, "black", 3, i)
 
     def makeConcatenation(self, col = "black", wid = 1, useBridge = True) :
         #print "self.points[0] =", self.points[0]
