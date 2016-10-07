@@ -338,23 +338,24 @@ class triangulation() :
             abc1 = geo.countAngle(c1, b, a)
             ac2c1 = geo.countAngle(a, c2, c1)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI or abc1 < geo.PI / 2:
                 break
             else :
                 self.checkBridge([aNum, c1Num], bNum)
                 
-                #centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
-                #radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
+                # testing info...
+                centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
+                radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
 
-                #centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
-                #radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
+                centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
+                radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
                 
-                #print radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
-                
+                #print aNum, c1Num, radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
+
                 if self.marginalPoints[c1Num] != 1 :
                     self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
                     self.marginalPoints[c1Num] = -1
-
+                    
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -372,15 +373,24 @@ class triangulation() :
             abc1 = geo.countAngle(a, b, c1)
             ac2c1 = geo.countAngle(c1, c2, a)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI :
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI or abc1 < geo.PI / 2:
                 break
             else :
                 self.checkBridge([aNum, c1Num], bNum)
                 
+                #testing info...
+                centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
+                radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
+
+                centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
+                radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
+                
+                #print aNum, c1Num, radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
+                
                 if self.marginalPoints[c1Num] != 1 :
                     self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
                     self.marginalPoints[c1Num] = -1
-
+                    
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -446,7 +456,7 @@ class triangulation() :
         else :
             [fix, open, third, breaker] = self.fictiveEdges.pop(0)
             center = geo.centerCircle(self.points[2][open], self.points[2][fix], self.points[2][third])
-
+            
         if self.marginalPoints[open] > -1 :
             return -1
 
@@ -466,7 +476,7 @@ class triangulation() :
 
         visited = set()
 
-        minRadius = 1e+8
+        minRadius = -1
         endStarterNum = -1
 
         #color_open = open < len(self.points[1])
@@ -478,7 +488,9 @@ class triangulation() :
             if nP not in visited :
                 visited.add(nP)
                 radius = geo.radiusByLineAndPoint(bridgeParameters, radiusBridge, center, openPoint, p)
-                if radius != -1 and radius < minRadius :
+                #draw.drawPoint(self.canvas, center, "purple", 5)
+                #print "radius", radius
+                if radius != -1 and (minRadius == -1 or radius < minRadius) :
                     minRadius = radius
                     endStarterNum = nP
 
@@ -487,8 +499,8 @@ class triangulation() :
                         checkPoints.put(test)
 
         #draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
+        #self.canvas.postscript(file="file_name.eps", colormode='color')
         #print open, endStarterNum
-        #nb = raw_input()
         return [open, endStarterNum]
 
     def drawAllPoints(self) :
@@ -578,8 +590,8 @@ class triangulation() :
             #self.points[1] = [[303, 233], [323, 157], [422, 150], [480, 107], [490, 212], [514, 271], [412, 268], [411, 222]]
 
             # ERROR
-            self.points[0] = [[72, 23], [562, 195], [538, 314], [270, 98], [24, 60], [487, 224], [130, 22], [92, 13], [103, 158], [382, 161]]
-            self.points[1] = [[72, 111], [457, 169], [93, 131], [657, 24], [68, 18], [180, 258], [649, 229], [251, 15], [466, 11], [109, 29]]
+            self.points[0] = [[156, 242], [378, 106], [512, 69], [43, 14], [175, 152], [336, 163], [114, 16], [503, 92], [520, 136], [619, 183]]
+            self.points[1] = [[497, 237], [603, 48], [621, 151], [379, 80], [168, 151], [42, 237], [570, 56], [425, 176], [101, 32], [27, 213]]
 
         else :
             nPoints = [500, 500]
