@@ -26,6 +26,7 @@ class triangulation() :
     mst = []
     bridges = []
     fictiveEdges = []
+    marginalPoints = []
     
     def __init__(self, _width = 600, _height = 400) :
         self.root = Tk()
@@ -114,12 +115,15 @@ class triangulation() :
                 self.drawTriangle(self.points[2], self.faces[2], "purple", 2, 0)"""
 
         if self.MSTmode == False :
+            self.marginalPoints = [0 for i in xrange(len(self.points[2]))]
             bridgeTime = self.makeConcatenation()
             #nb = raw_input()
         
             self.bridges = []
             self.fictiveEdges = []
-
+            self.marginalPoints = [0 for i in xrange(len(self.points[2]))]
+            self.canvas.delete("all")
+        
             fictiveTime = self.makeConcatenation(useBridge = False)
             return [sciPyTime, bridgeTime, fictiveTime]
             
@@ -288,6 +292,7 @@ class triangulation() :
                     self.neighbors[2][i * len(self.points[0]) + j].append(self.neighbors[i][j][k] + i * len(self.points[0]))
 
     def addPointToPencil(self, where, pNum) :
+        self.marginalPoints[pNum] = 1
         if self.neighbors[2][where].count(pNum) > 0 :
             return False
 
@@ -345,8 +350,11 @@ class triangulation() :
                 #radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
                 
                 #print radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
-                self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
                 
+                if self.marginalPoints[c1Num] != 1 :
+                    self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
+                    self.marginalPoints[c1Num] = -1
+
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -369,7 +377,9 @@ class triangulation() :
             else :
                 self.checkBridge([aNum, c1Num], bNum)
                 
-                self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
+                if self.marginalPoints[c1Num] != 1 :
+                    self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
+                    self.marginalPoints[c1Num] = -1
 
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -437,16 +447,19 @@ class triangulation() :
             [fix, open, third, breaker] = self.fictiveEdges.pop(0)
             center = geo.centerCircle(self.points[2][open], self.points[2][fix], self.points[2][third])
 
+        if self.marginalPoints[open] > -1 :
+            return -1
+
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
 
         radiusBridge = geo.getLength(center, openPoint)
         bridgeParameters = geo.lineParameters(openPoint, center)
         
-        #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
-        #draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
-        #draw.drawCircle(self.canvas, center, "blue", wid = radiusBridge)
-        #self.drawAllPoints()
+        draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
+        draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
+        draw.drawCircle(self.canvas, center, "blue", wid = radiusBridge)
+        self.drawAllPoints()
         
         checkPoints = Queue.Queue()
         checkPoints.put(breaker)
@@ -455,6 +468,8 @@ class triangulation() :
 
         minRadius = 1e+4
         endStarterNum = -1
+
+        color_open = open < len(self.points[1])
 
         while not checkPoints.empty() :
             nP = checkPoints.get()
@@ -468,11 +483,12 @@ class triangulation() :
                     endStarterNum = nP
 
                 for test in self.neighbors[2][nP] :
-                    if geo.getLength(center, self.points[2][test]) < radiusBridge :
+                    if geo.getLength(center, self.points[2][test]) < radiusBridge and color_open != test < len(self.points[1]) :
+                        print open, test
                         checkPoints.put(test)
 
-        #draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
-        #nb = raw_input()
+        draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
+        nb = raw_input()
         return [open, endStarterNum]
 
     def drawAllPoints(self) :
@@ -493,11 +509,15 @@ class triangulation() :
         
         self.sewTriangle(starter)
         
+        all_starters = 0
+        used_starters = 0;
         while((useBridge and len(self.bridges) != 0) or (not useBridge and len(self.fictiveEdges) != 0)) :
             starter = self.findNextStarter(useBridge)
-            
+            all_starters += 1
+
             if starter == -1 :
                 continue
+            used_starters += 1
             if self.addEdgeToPencil(starter) :
                 self.sewTriangle(starter, 0, "#00CC33")
             else :
@@ -507,7 +527,8 @@ class triangulation() :
 
         self.drawStruct(col, wid)
         self.drawAllPoints()
-        print "ok"
+        print "ok", used_starters, "/", all_starters
+        #nb = raw_input()
 
         return finish - start
         
@@ -523,7 +544,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -539,8 +560,8 @@ class triangulation() :
             #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
             
             #circlic seam
-            self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
-            self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
+            #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
+            #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
             # big example
             #self.points[0] = [[144, 161], [272, 247], [70, 341], [360, 205], [474, 294], [87, 153], [351, 127], [543, 136], [468, 324], [447, 38], [571, 129], [176, 182], [179, 341], [452, 212], [95, 320], [31, 236], [265, 75], [548, 21], [364, 191], [111, 78], [369, 88], [454, 105], [42, 233], [49, 125], [503, 175], [56, 93], [92, 248], [474, 92], [19, 269], [467, 283], [427, 239], [463, 15], [232, 20], [405, 141], [135, 177], [483, 37], [440, 102], [184, 160], [553, 147], [338, 330], [121, 26], [306, 152], [137, 93], [107, 124], [448, 339], [481, 77], [397, 113], [570, 285], [11, 38], [343, 113], [379, 39], [16, 146], [238, 196], [481, 125], [24, 207], [97, 81], [535, 194], [114, 46], [80, 213], [512, 268], [72, 276], [185, 21], [429, 278], [90, 212], [75, 65], [512, 7], [287, 5], [532, 284], [371, 234], [455, 311], [367, 320], [31, 151], [406, 188], [359, 252], [457, 334], [479, 185], [39, 213], [236, 298], [217, 29], [123, 275], [508, 285], [294, 67], [375, 219], [462, 118], [196, 117], [15, 179], [318, 9], [525, 290], [121, 86], [47, 207], [321, 27], [539, 206], [74, 82], [33, 43], [360, 144], [50, 101], [392, 160], [550, 126], [38, 33], [159, 110]]
@@ -556,8 +577,12 @@ class triangulation() :
             #self.points[0] = [[245, 156], [246, 224], [322, 188], [356, 116], [401, 192], [372, 240], [316, 280], [459, 246], [467, 166]]
             #self.points[1] = [[303, 233], [323, 157], [422, 150], [480, 107], [490, 212], [514, 271], [412, 268], [411, 222]]
 
+            # ERROR
+            self.points[0] = [[72, 23], [562, 195], [538, 314], [270, 98], [24, 60], [487, 224], [130, 22], [92, 13], [103, 158], [382, 161]]
+            self.points[1] = [[72, 111], [457, 169], [93, 131], [657, 24], [68, 18], [180, 258], [649, 229], [251, 15], [466, 11], [109, 29]]
+
         else :
-            nPoints = [100, 100]
+            nPoints = [500, 500]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
@@ -568,7 +593,7 @@ class triangulation() :
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
 
-        self.drawAllPoints()
+        #self.drawAllPoints()
         
         [sciPyTime, bridgeTime, fictiveTime] = self.makeTriangle()
         
