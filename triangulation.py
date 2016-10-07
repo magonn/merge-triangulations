@@ -456,20 +456,20 @@ class triangulation() :
         radiusBridge = geo.getLength(center, openPoint)
         bridgeParameters = geo.lineParameters(openPoint, center)
         
-        draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
-        draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
-        draw.drawCircle(self.canvas, center, "blue", wid = radiusBridge)
-        self.drawAllPoints()
+        #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
+        #draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
+        #draw.drawCircle(self.canvas, center, "blue", wid = radiusBridge)
+        #self.drawAllPoints()
         
         checkPoints = Queue.Queue()
         checkPoints.put(breaker)
 
         visited = set()
 
-        minRadius = 1e+4
+        minRadius = 1e+8
         endStarterNum = -1
 
-        color_open = open < len(self.points[1])
+        #color_open = open < len(self.points[1])
 
         while not checkPoints.empty() :
             nP = checkPoints.get()
@@ -483,12 +483,12 @@ class triangulation() :
                     endStarterNum = nP
 
                 for test in self.neighbors[2][nP] :
-                    if geo.getLength(center, self.points[2][test]) < radiusBridge and color_open != test < len(self.points[1]) :
-                        print open, test
+                    if geo.getLength(center, self.points[2][test]) < radiusBridge :# and color_open != test < len(self.points[1]) :
                         checkPoints.put(test)
 
-        draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
-        nb = raw_input()
+        #draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
+        #print open, endStarterNum
+        #nb = raw_input()
         return [open, endStarterNum]
 
     def drawAllPoints(self) :
@@ -544,7 +544,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 0 # 0 - example, 1 - rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
