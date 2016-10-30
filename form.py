@@ -11,8 +11,6 @@ class BaseForm(object):
     # in experement mode do not remove last point (click on button)
     experimentMode = False
 
-    MSTmode = False # TODO
-
     points = [[], [], []]
 
     # data for creation structure
@@ -43,7 +41,7 @@ class BaseForm(object):
         self.b1 = Button(self.root, bg = "white", fg = "black", text = "Second points set", command = self.SecondPointsSet)
         self.b1.place(x = 50, y = _height - 50)        
         
-        self.b2 = Button(self.root, bg = "white", fg = "black", text = "Triangulation", command = self.Preprocessing)
+        self.b2 = Button(self.root, bg = "white", fg = "black", text = "Triangulation", command = self.Run)
         self.b2.place(x = 200, y = _height - 50)
         
         self.b3 = Button(self.root, bg = "white", fg = "black", text = "MST", command = self.ButtonHandlerMST)
@@ -75,8 +73,8 @@ class BaseForm(object):
 
         self.firstPointsSet = True
         self.preprocessingDone = False
-        self.MSTmode = False
-
+        self.experimentMode = True
+        
         self.points = [[], [], []]
 
         self.faces = [[], [], []]
@@ -92,7 +90,7 @@ class BaseForm(object):
     def SecondPointsSet(self):
         self.firstPointsSet = False
 
-    def Preprocessing(self):
+    def Run(self):
         raise NotImplementedError('This function must be implemented within child class!')
 
     def ButtonHandlerMST(self):

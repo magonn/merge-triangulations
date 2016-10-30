@@ -24,6 +24,7 @@ class ConstructTriangulation(BaseForm):
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
                 #draw.Triangle(self.canvas, self.points[i], self.faces[i], "black", 1, i)
+                #raw_input()
             
             self.points[2].extend(self.points[0])
             self.points[2].extend(self.points[1])
@@ -33,22 +34,13 @@ class ConstructTriangulation(BaseForm):
             self.faces[2] = tri.vertices
             self.neighFaces[2] = tri.neighbors
             self.scipyTime = time() - start
-            #draw.Triangle(self.canvas, self.points[2], self.faces[2], "black", 1, 2)
+
+            #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
             
             self.mst = mst.ConstructMST(self.points, self.faces)
-
-        draw.AllPoints(self.canvas, self.points)
-        if not self.MSTmode:
-            self.marginalPoints = [0 for i in xrange(len(self.points[2]))]
-            bridgeTime = self.makeConcatenation()
             
-            self.bridges = []
-            self.fictiveEdges = []
-            self.marginalPoints = [0 for i in xrange(len(self.points[2]))]
-            self.canvas.delete("all")
-        
-            fictiveTime = self.makeConcatenation(useBridge = False)
-            return [bridgeTime, fictiveTime]
+        self.createStruct()
+        draw.AllPoints(self.canvas, self.points)
             
     def drawMST(self, num, col = "black", wid = 1) :
         for edge in self.mst[num] :
@@ -58,7 +50,6 @@ class ConstructTriangulation(BaseForm):
             draw.Edge(self.canvas, p1, p2, col, wid)
 
     def ButtonHandlerMST(self) :
-        self.MSTmode = True
         self.Preprocessing()
         
         draw.Triangle(self.canvas, self.points[0], self.faces[0], "black", 1, 0)
@@ -67,42 +58,6 @@ class ConstructTriangulation(BaseForm):
         self.drawMST(0, "red", 2)
         self.drawMST(1, "green", 2)
         draw.AllPoints(self.canvas, self.points)
-        self.MSTmode = False
-
-    def findFirstStarter(self) :
-        twoStarter = [0, 0]
-        for i in xrange(2) :
-            for j in xrange(len(self.points[i])) :
-                p = self.points[i][j]
-                tempStarter = self.points[i][twoStarter[i]]
-                if (p[0] < tempStarter[0]) or (p[0] == tempStarter[0] and p[1] > tempStarter[1]) :
-                    twoStarter[i] = j
-        
-        pTwoStarter = [self.points[0][twoStarter[0]], self.points[1][twoStarter[1]]]
-        fixPoint = (pTwoStarter[0][0] < pTwoStarter[1][0]) or (pTwoStarter[0][0] == pTwoStarter[1][0] and (pTwoStarter[0][1] > pTwoStarter[1][1]))
-        
-        pEndFixPoint = pTwoStarter[1 - fixPoint]
-        endFixPoint = twoStarter[1 - fixPoint]
-        
-        minLength = 1e+10
-        for j in xrange(len(self.points[1 - fixPoint])) :
-            p = self.points[1 - fixPoint][j]
-            if p[0] == pTwoStarter[fixPoint][0] :
-                continue
-            
-            temp = ((p[0] - pTwoStarter[fixPoint][0]) ** 2 + (p[1] - pTwoStarter[fixPoint][1]) ** 2) / (2 * (pTwoStarter[fixPoint][0] - p[0]))
-            if 0 < temp and temp < minLength :
-                minLength = temp
-                endFixPoint = j
-                pEndFixPoint = p
-                
-        pRes = [pTwoStarter[fixPoint], pEndFixPoint]
-        if fixPoint == 1 :
-            res = [endFixPoint, twoStarter[1]]
-        else :
-            res = [twoStarter[0], endFixPoint]
-        res = [res[0], res[1] + len(self.points[0])]
-        return res
 
     def drawStruct(self, col = "black", wid = 1) :
         for i in xrange(len(self.points[2])) :
@@ -175,8 +130,42 @@ class ConstructTriangulation(BaseForm):
                 for k in xrange(len(self.neighbors[i][j])) :
                     self.neighbors[2][i * len(self.points[0]) + j].append(self.neighbors[i][j][k] + i * len(self.points[0]))
 
+    def findFirstStarter(self) :
+        twoStarter = [0, 0]
+        for i in xrange(2) :
+            for j in xrange(len(self.points[i])) :
+                p = self.points[i][j]
+                tempStarter = self.points[i][twoStarter[i]]
+                if (p[0] < tempStarter[0]) or (p[0] == tempStarter[0] and p[1] > tempStarter[1]) :
+                    twoStarter[i] = j
+        
+        pTwoStarter = [self.points[0][twoStarter[0]], self.points[1][twoStarter[1]]]
+        fixPoint = (pTwoStarter[0][0] < pTwoStarter[1][0]) or (pTwoStarter[0][0] == pTwoStarter[1][0] and (pTwoStarter[0][1] > pTwoStarter[1][1]))
+        
+        pEndFixPoint = pTwoStarter[1 - fixPoint]
+        endFixPoint = twoStarter[1 - fixPoint]
+        
+        minLength = 1e+10
+        for j in xrange(len(self.points[1 - fixPoint])) :
+            p = self.points[1 - fixPoint][j]
+            if p[0] == pTwoStarter[fixPoint][0] :
+                continue
+            
+            temp = ((p[0] - pTwoStarter[fixPoint][0]) ** 2 + (p[1] - pTwoStarter[fixPoint][1]) ** 2) / (2 * (pTwoStarter[fixPoint][0] - p[0]))
+            if 0 < temp and temp < minLength :
+                minLength = temp
+                endFixPoint = j
+                pEndFixPoint = p
+                
+        pRes = [pTwoStarter[fixPoint], pEndFixPoint]
+        if fixPoint == 1 :
+            res = [endFixPoint, twoStarter[1]]
+        else :
+            res = [twoStarter[0], endFixPoint]
+        res = [res[0], res[1] + len(self.points[0])]
+        return res
+
     def addPointToPencil(self, where, pNum) :
-        self.marginalPoints[pNum] = 1
         if self.neighbors[2][where].count(pNum) > 0 :
             return False
 
@@ -201,13 +190,44 @@ class ConstructTriangulation(BaseForm):
         return flag
 
     def checkBridge(self, edge, breaker) :
+        #print "edge", edge,
         if self.mst[2].count(edge) > 0 or self.mst[2].count([edge[1], edge[0]]) > 0 :
             self.bridges.append([edge[0], edge[1], breaker])
+        #else:
+        #    print False
+    
+    def checkFictiveEdge(self, edge, breaker):
+        #print "edge", edge,
+        [aNum, c1Num] = edge
         
+        num1 = int(aNum >= len(self.points[0]))
+        num2 = int(c1Num >= len(self.points[0]))
+        
+        if num1 != num2:
+            return
+        num = num1
+        
+        aNum -= num * len(self.points[0])
+        c1Num -= num * len(self.points[0])
+
+        idx = self.neighbors[num][aNum].index(c1Num)
+        numPoints = len(self.neighbors[num][aNum])
+        c2Num = self.neighbors[num][aNum][(idx - 1) % numPoints]
+        dNum = self.neighbors[num][aNum][(idx + 1) % numPoints]
+
+        adc1 = geo.countAngle(self.points[num][c1Num], self.points[num][dNum], self.points[num][aNum])
+        ac2c1 = geo.countAngle(self.points[num][aNum], self.points[num][c2Num], self.points[num][c1Num])
+
+        if (adc1 <= geo.PI / 2  or adc1 > geo.PI) and (ac2c1 <= geo.PI / 2 or ac2c1 > geo.PI):
+            self.fictiveEdges.append([edge[0], edge[1], breaker])
+        #else:
+        #    print False
+            
     def deleteWrongEdges(self, starter, reverse = 0) :
         [aNum, bNum] = starter
         a = self.points[2][aNum]
         b = self.points[2][bNum]
+        
         while(1) :
             idx = self.neighbors[2][aNum].index(bNum)
             numPoints = len(self.neighbors[2][aNum])
@@ -222,24 +242,12 @@ class ConstructTriangulation(BaseForm):
             abc1 = geo.countAngle(c1, b, a)
             ac2c1 = geo.countAngle(a, c2, c1)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI or abc1 < geo.PI / 2:
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:# or abc1 < geo.PI / 2:
                 break
             else :
                 self.checkBridge([aNum, c1Num], bNum)
-                
-                # testing info...
-                #centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
-                #radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
+                self.checkFictiveEdge([aNum, c1Num], bNum)
 
-                #centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
-                #radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
-                
-                #print aNum, c1Num, radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
-
-                if self.marginalPoints[c1Num] != 1 and ac2c1 < geo.PI / 2 and geo.countAngle(a, self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]], c1) < geo.PI / 2:
-                    self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
-                    self.marginalPoints[c1Num] = -1
-                    
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
                 
@@ -257,23 +265,11 @@ class ConstructTriangulation(BaseForm):
             abc1 = geo.countAngle(a, b, c1)
             ac2c1 = geo.countAngle(c1, c2, a)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI or abc1 < geo.PI / 2:
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:# or abc1 < geo.PI / 2:
                 break
             else :
                 self.checkBridge([aNum, c1Num], bNum)
-                
-                #testing info...
-                #centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
-                #radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
-
-                #centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
-                #radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
-                
-                #print aNum, c1Num, radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
-                
-                if self.marginalPoints[c1Num] != 1 and ac2c1 < geo.PI / 2 and geo.countAngle(a, self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]], c1) < geo.PI / 2:
-                    self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
-                    self.marginalPoints[c1Num] = -1
+                self.checkFictiveEdge([aNum, c1Num], bNum)
                     
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -289,6 +285,9 @@ class ConstructTriangulation(BaseForm):
         a = self.points[2][aNum]
         b = self.points[2][bNum]
         
+        #draw.Edge(self.canvas, self.points[2][aNum], self.points[2][bNum], colorEdge, 2)
+        #raw_input()
+
         while(1) :
             self.deleteWrongEdges([aNum, bNum])
             
@@ -304,6 +303,9 @@ class ConstructTriangulation(BaseForm):
             adb = geo.countAngle(a, d, b)
 
             if (cNum != bNum) and ((acb > adb and acb < geo.PI) or (adb >= geo.PI and acb < geo.PI)) : # CB is edge
+                draw.Edge(self.canvas, self.points[2][cNum], self.points[2][bNum], colorEdge, 2)
+                #raw_input()
+
                 self.addEdgeToPencil([cNum, bNum])
 
                 if self.checkNewEdge(starter, [cNum, bNum]) :
@@ -313,6 +315,9 @@ class ConstructTriangulation(BaseForm):
                     aNum = cNum
                     a = c
             elif (aNum != dNum) and (acb < adb and  adb < geo.PI) or (acb >= geo.PI and adb < geo.PI) : # AD is edge
+                draw.Edge(self.canvas, self.points[2][aNum], self.points[2][dNum], colorEdge, 2)
+                #raw_input()
+
                 self.addEdgeToPencil([aNum, dNum])
 
                 if self.checkNewEdge(starter, [aNum, dNum]) :
@@ -333,29 +338,27 @@ class ConstructTriangulation(BaseForm):
                 return i
         return -1
 
-    def findNextStarter(self, useBridge = True) :
-        if useBridge :
+    def findNextStarter(self, useBridge = True):
+        if useBridge:
             [fix, open, breaker] = self.bridges.pop(0)
         #    center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
-        else :
-            [fix, open, third, breaker] = self.fictiveEdges.pop(0)
+        else:
+            [fix, open, breaker] = self.fictiveEdges.pop(0)
+        #    [fix, open, third, breaker] = self.fictiveEdges.pop(0)
         #    center = geo.centerCircle(self.points[2][open], self.points[2][fix], self.points[2][third])
         
         center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
         
-        if self.marginalPoints[open] > -1 :
-            return -1
-
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
 
         radiusBridge = geo.getLength(center, openPoint)
         bridgeParameters = geo.lineParameters(openPoint, center)
         
-        draw.Edge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
-        draw.Point(self.canvas, self.points[2][breaker], "green", 5)
-        draw.Circle(self.canvas, center, "blue", wid = radiusBridge)
-        draw.AllPoints(self.canvas, self.points)
+        #draw.Edge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
+        #draw.Point(self.canvas, self.points[2][breaker], "green", 5)
+        #draw.Circle(self.canvas, center, "blue", wid = radiusBridge)
+        #draw.AllPoints(self.canvas, self.points)
         
         checkPoints = Queue.Queue()
         checkPoints.put(breaker)
@@ -385,25 +388,19 @@ class ConstructTriangulation(BaseForm):
                         checkPoints.put(test)
 
         draw.Edge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
-        print open, endStarterNum
+        #print open, endStarterNum
         return [open, endStarterNum]
 
-    
-
     def makeConcatenation(self, col = "black", wid = 1, useBridge = True) :
-        #print "self.points[0] =", self.points[0]
-        #print "self.points[1] =", self.points[1]
-        
-        self.createStruct()
-        start = time()        
+        start = time()   
 
         starter = self.findFirstStarter()
         self.addEdgeToPencil(starter)
-        
+
         self.sewTriangle(starter)
         
         all_starters = 0
-        used_starters = 0;
+        used_starters = 0
         while((useBridge and len(self.bridges) != 0) or (not useBridge and len(self.fictiveEdges) != 0)) :
             starter = self.findNextStarter(useBridge)
             all_starters += 1
@@ -413,8 +410,8 @@ class ConstructTriangulation(BaseForm):
             used_starters += 1
             if self.addEdgeToPencil(starter) :
                 self.sewTriangle(starter, 0, "#00CC33")
-            else :
-                print useBridge, "edge exists"
+            #else :
+            #    print useBridge, "edge exists"
         
         finish = time()
 
@@ -425,17 +422,34 @@ class ConstructTriangulation(BaseForm):
 
         return finish - start
         
+    def Run(self):
+        #print "self.points[0] =", self.points[0]
+        #print "self.points[1] =", self.points[1]
+        
+        bridgeTime = -1
+        fictiveTime = -1
+        
+        # use bridges
+        self.Preprocessing()
+        draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
+        bridgeTime = self.makeConcatenation()
+        #raw_input()
+
+        # use fictive edges
+        #self.Preprocessing()
+        #self.bridges = []
+        #self.fictiveEdges = []
+        #self.canvas.delete("all")
+        #draw.Triangle(self.canvas, self.points[2], self.faces[2], "yellow", 3, 2)
+        
+        #fictiveTime = self.makeConcatenation(useBridge = False)
+        #raw_input()
+
+        return [bridgeTime, fictiveTime]
+
     def Experiment(self) :
-        self.preprocessingDone = False
-        self.firstPointsSet = True
-        self.points = [[], [], []]
-        self.faces = [[], [], []]
-        self.bridges = []
-        self.fictiveEdges = []
-
-        self.canvas.delete("all")
-        self.experimentMode = True
-
+        self.Reset()
+        
         randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
@@ -448,8 +462,8 @@ class ConstructTriangulation(BaseForm):
             #self.points[1] = [[192, 203], [199, 147], [249, 187], [300, 158], [270, 236]]
 
             #model example in report
-            self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
-            self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
+            #self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
+            #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
             
             #circlic seam
             #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
@@ -467,14 +481,14 @@ class ConstructTriangulation(BaseForm):
             #self.points[1] = [[168, 157], [208, 337], [472, 234], [24, 39], [202, 230], [552, 173], [337, 44], [256, 47], [114, 124], [33, 37], [114, 103], [538, 93], [265, 7], [329, 333], [147, 108], [491, 334], [260, 240], [394, 182], [269, 186], [414, 241], [578, 282], [149, 292], [448, 57], [219, 80], [202, 316], [31, 206], [63, 268], [186, 162], [329, 85], [476, 199], [141, 257], [113, 174], [273, 30], [398, 5], [423, 340], [226, 49], [95, 237], [406, 12], [57, 63], [58, 27], [380, 7], [208, 21], [469, 102], [466, 57], [97, 225], [116, 194], [180, 117], [216, 50], [115, 305], [86, 127]]
 
             # ERROR
-            #self.points[0] = [[653, 109], [659, 122], [160, 103], [28, 21], [510, 200], [222, 318], [90, 259], [279, 249], [269, 37], [643, 280]]
-            #self.points[1] = [[140, 33], [620, 140], [284, 219], [439, 209], [477, 129], [665, 13], [593, 182], [174, 344], [550, 302], [270, 154]]
-
+            self.points[0] = [[440, 150], [159, 264], [345, 222], [683, 42], [633, 180], [36, 299], [70, 94], [297, 26], [343, 179], [79, 221]]
+            self.points[1] = [[486, 170], [415, 182], [305, 304], [497, 6], [567, 260], [106, 235], [345, 221], [73, 323], [420, 232], [22, 57]]
+            
         else :
-            nPoints = [5000, 5000]
+            n = 1000
             for i in xrange(2) :
-                x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
-                y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
+                x = np.random.randint(0, self.width - 20, (n, 1)) + 10
+                y = np.random.randint(0, self.height - 60, (n, 1)) + 5
                 self.points[i] = np.concatenate((x, y), axis = 1)
 
                 self.SecondPointsSet()
@@ -482,27 +496,19 @@ class ConstructTriangulation(BaseForm):
             self.points[0] = self.points[0].tolist()
             self.points[1] = self.points[1].tolist()
 
-        #draw.AllPoints(self.canvas, self.points)
+        draw.AllPoints(self.canvas, self.points)
         
-        [bridgeTime, fictiveTime] = self.Preprocessing()
+        [bridgeTime, fictiveTime] = self.Run()
         
         print "sciPy", self.scipyTime
         print "my   ", bridgeTime
         print "new  ", fictiveTime
 
     def FindErrors(self) :
-        flag = True
         n = 10
-        while flag :
-            self.preprocessingDone = False
-            self.firstPointsSet = True
-            self.points = [[], [], []]
-            self.faces = [[], [], []]
-            self.bridges = []
-
-            self.canvas.delete("all")
-            self.experimentMode = True
-
+        while True :
+            self.Reset()
+            
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (n, 1)) + 10
                 y = np.random.randint(0, self.height - 60, (n, 1)) + 5
@@ -514,9 +520,9 @@ class ConstructTriangulation(BaseForm):
             self.points[1] = self.points[1].tolist()
 
             try :
-                self.Preprocessing()
+                self.Run()
             except :
                 print "!!! ERROR !!!"
                 print "self.points[0] =", self.points[0]
                 print "self.points[1] =", self.points[1]
-                flag = False
+                break
