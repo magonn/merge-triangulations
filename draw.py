@@ -25,3 +25,6 @@ def drawTriangle(canvas, points, faces, col, wid = 1, type = 0) :
                 line = canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = col, width = wid)
             else :
                 line = canvas.create_line(temp[j][0], temp[j][1], temp[j + 1][0], temp[j + 1][1], fill = col, width = wid, dash = '- -')
+
+def saveFigure(canvas, output = "data.eps") :
+    canvas.postscript(file = output, colormode = 'color')

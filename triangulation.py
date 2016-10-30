@@ -344,15 +344,15 @@ class triangulation() :
                 self.checkBridge([aNum, c1Num], bNum)
                 
                 # testing info...
-                centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
-                radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
+                #centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
+                #radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
 
-                centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
-                radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
+                #centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
+                #radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
                 
                 #print aNum, c1Num, radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
 
-                if self.marginalPoints[c1Num] != 1 :
+                if self.marginalPoints[c1Num] != 1 and ac2c1 < geo.PI / 2 and geo.countAngle(a, self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]], c1) < geo.PI / 2:
                     self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
                     self.marginalPoints[c1Num] = -1
                     
@@ -379,15 +379,15 @@ class triangulation() :
                 self.checkBridge([aNum, c1Num], bNum)
                 
                 #testing info...
-                centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
-                radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
+                #centerAC1C2 = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][c2Num])
+                #radiusAC1C2 = geo.getLength(centerAC1C2, self.points[2][aNum])
 
-                centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
-                radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
+                #centerAC1D = geo.centerCircle(self.points[2][aNum], self.points[2][c1Num], self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]])
+                #radiusAC1D = geo.getLength(centerAC1D, self.points[2][aNum])
                 
                 #print aNum, c1Num, radiusAC1C2 > geo.getLength(centerAC1C2, self.points[2][bNum]), radiusAC1D > geo.getLength(centerAC1D, self.points[2][bNum])
                 
-                if self.marginalPoints[c1Num] != 1 :
+                if self.marginalPoints[c1Num] != 1 and ac2c1 < geo.PI / 2 and geo.countAngle(a, self.points[2][self.neighbors[2][aNum][(idx + 1) % numPoints]], c1) < geo.PI / 2:
                     self.fictiveEdges.append([aNum, c1Num, c2Num, bNum]) #ac1c2 - triangle, bNUm - breaker
                     self.marginalPoints[c1Num] = -1
                     
@@ -452,11 +452,13 @@ class triangulation() :
     def findNextStarter(self, useBridge = True) :
         if useBridge :
             [fix, open, breaker] = self.bridges.pop(0)
-            center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
+        #    center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
         else :
             [fix, open, third, breaker] = self.fictiveEdges.pop(0)
-            center = geo.centerCircle(self.points[2][open], self.points[2][fix], self.points[2][third])
-            
+        #    center = geo.centerCircle(self.points[2][open], self.points[2][fix], self.points[2][third])
+        
+        center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
+        
         if self.marginalPoints[open] > -1 :
             return -1
 
@@ -466,10 +468,10 @@ class triangulation() :
         radiusBridge = geo.getLength(center, openPoint)
         bridgeParameters = geo.lineParameters(openPoint, center)
         
-        #draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
-        #draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
-        #draw.drawCircle(self.canvas, center, "blue", wid = radiusBridge)
-        #self.drawAllPoints()
+        draw.drawEdge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
+        draw.drawPoint(self.canvas, self.points[2][breaker], "green", 5)
+        draw.drawCircle(self.canvas, center, "blue", wid = radiusBridge)
+        self.drawAllPoints()
         
         checkPoints = Queue.Queue()
         checkPoints.put(breaker)
@@ -498,9 +500,8 @@ class triangulation() :
                     if geo.getLength(center, self.points[2][test]) < radiusBridge :# and color_open != test < len(self.points[1]) :
                         checkPoints.put(test)
 
-        #draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
-        #self.canvas.postscript(file="file_name.eps", colormode='color')
-        #print open, endStarterNum
+        draw.drawEdge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
+        print open, endStarterNum
         return [open, endStarterNum]
 
     def drawAllPoints(self) :
@@ -556,7 +557,7 @@ class triangulation() :
         self.canvas.delete("all")
         self.experimentMode = True
 
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0 :
             # separeted triangle seam
@@ -590,11 +591,11 @@ class triangulation() :
             #self.points[1] = [[303, 233], [323, 157], [422, 150], [480, 107], [490, 212], [514, 271], [412, 268], [411, 222]]
 
             # ERROR
-            self.points[0] = [[156, 242], [378, 106], [512, 69], [43, 14], [175, 152], [336, 163], [114, 16], [503, 92], [520, 136], [619, 183]]
-            self.points[1] = [[497, 237], [603, 48], [621, 151], [379, 80], [168, 151], [42, 237], [570, 56], [425, 176], [101, 32], [27, 213]]
+            self.points[0] = [[211, 237], [637, 13], [507, 219], [59, 211], [87, 91], [460, 147], [287, 145], [613, 53], [573, 331], [436, 221]]
+            self.points[1] = [[111, 241], [62, 16], [252, 16], [182, 111], [398, 177], [165, 116], [672, 107], [426, 182], [236, 313], [135, 213]]
 
         else :
-            nPoints = [500, 500]
+            nPoints = [5000, 5000]
             for i in xrange(2) :
                 x = np.random.randint(0, self.width - 20, (nPoints[i], 1)) + 10
                 y = np.random.randint(0, self.height - 60, (nPoints[i], 1)) + 5
