@@ -1,10 +1,10 @@
-from math import *
+import math
 
 EPS = 1e-4
-PI = pi
+PI = math.pi
 
 def sign(x) :
-    return int(copysign(1, x))
+    return int(math.copysign(1, x))
 
 def getLength(p1, p2) :
     return ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** (0.5)
@@ -29,25 +29,25 @@ def countAngle(p1, p2, p3) :
     sin_arg = (v1[0] * v2[1] - v2[0] * v1[1]) / (l1 * l2)
     if abs(abs(sin_arg) - 1) < EPS :
         x = sign(sin_arg)
-        aSin = asin(x)
+        aSin = math.asin(x)
     else :
-        aSin = asin(sin_arg)
+        aSin = math.asin(sin_arg)
 
     cos_arg = (v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2)
     if abs(abs(cos_arg) - 1) < EPS :
         x = sign(cos_arg)
-        aCos = acos(x)
+        aCos = math.acos(x)
     else :
-        aCos = acos(cos_arg)
+        aCos = math.acos(cos_arg)
     
     if sin_arg >= 0 and cos_arg >= 0 : # first quarter
         return (aSin + aCos) / 2.0
     elif sin_arg >= 0 and cos_arg < 0 : # second quarter
-        return ((pi - aSin) + aCos) / 2.0
+        return ((PI - aSin) + aCos) / 2.0
     elif sin_arg < 0 and cos_arg < 0 : # third quarter
-        return ((pi - aSin) + (2 * pi - aCos)) / 2.0
+        return ((PI - aSin) + (2 * PI - aCos)) / 2.0
     else : # fourth quarter
-        return 2 * pi + (aSin - aCos) / 2.0
+        return 2 * PI + (aSin - aCos) / 2.0
 
 def lineParameters(p1, p2) :
     a = p1[1] - p2[1]
@@ -84,7 +84,6 @@ def radiusByLineAndPoint(line, radius, center, openPoint, checkPoint) :
 
     pIntersect = intersectLines(line, [pa, pb, pc])
 
-    #if inSegment(openPoint, fixPoint, pIntersect) :
     if getLength(pIntersect, center) < radius :
         return getLength(pIntersect, checkPoint)
     else :
