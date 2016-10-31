@@ -4,6 +4,5 @@
 from triangulation import *
 
 if __name__ == '__main__':
-    app = ConstructTriangulation(5000, 5000)
-    app.ExperimentTime()
+    app = ConstructTriangulation()
     app.root.mainloop()

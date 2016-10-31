@@ -6,26 +6,14 @@ import Queue
 import sets
 from time import *
 
-import mst
 import geo
 import draw
 
 class ConstructTriangulation(BaseForm):
 
-    def IncreaseDistance(self):
-        for i in xrange(len(self.points[2]) - 1):
-            for j in xrange(i + 1, len(self.points[2])):
-                cur = geo.getLength(self.points[2][i], self.points[2][j])
-                if cur < geo.MINDIST:
-                    self.points[2][i][0] += 5
-
     def Preprocessing(self):
     	if not self.preprocessingDone:
             self.preprocessingDone = True
-            
-            self.points[2].extend(self.points[0])
-            self.points[2].extend(self.points[1])
-            self.IncreaseDistance()
             
             for i in xrange(2):
                 if not self.experimentMode:
@@ -37,6 +25,9 @@ class ConstructTriangulation(BaseForm):
                 #draw.Triangle(self.canvas, self.points[i], self.faces[i], "black", 1, i)
                 #raw_input()
             
+            self.points[2].extend(self.points[0])
+            self.points[2].extend(self.points[1])
+
             start = time()
             tri = Delaunay(self.points[2])
             self.faces[2] = tri.vertices
@@ -45,28 +36,9 @@ class ConstructTriangulation(BaseForm):
 
             #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
             
-            self.mst = mst.ConstructMST(self.points, self.faces)
-            
         self.CreateStruct()
         draw.AllPoints(self.canvas, self.points)
             
-    def DrawMST(self, num, col = "black", wid = 1):
-        for edge in self.mst[num]:
-            p1 = self.points[2][edge[0]]
-            p2 = self.points[2][edge[1]]
-            
-            draw.Edge(self.canvas, p1, p2, col, wid)
-
-    def ButtonHandlerMST(self):
-        self.Preprocessing()
-        
-        draw.Triangle(self.canvas, self.points[0], self.faces[0], "black", 1, 0)
-        draw.Triangle(self.canvas, self.points[1], self.faces[1], "black", 1, 1)
-    
-        self.DrawMST(0, "red", 2)
-        self.DrawMST(1, "green", 2)
-        draw.AllPoints(self.canvas, self.points)
-
     def DrawStruct(self, col = "black", wid = 1):
         for i in xrange(len(self.points[2])):
             p1 = self.points[2][i]
@@ -197,13 +169,6 @@ class ConstructTriangulation(BaseForm):
             flag = flag and self.AddPointToPencil(edge[i], edge[1 - i])
         return flag
 
-    def IsBridge(self, edge, breaker):
-        #print "edge", edge,
-        if self.mst[2].count(edge) > 0 or self.mst[2].count([edge[1], edge[0]]) > 0:
-            self.bridges.append([edge[0], edge[1], breaker])
-        #else:
-        #    print False
-    
     def IsFictiveEdge(self, edge, breaker):
         #print "edge", edge,
         [aNum, c1Num] = edge
@@ -228,8 +193,6 @@ class ConstructTriangulation(BaseForm):
 
         if (adc1 <= geo.PI / 2  or adc1 > geo.PI) and (ac2c1 <= geo.PI / 2 or ac2c1 > geo.PI):
             self.fictiveEdges.append([edge[0], edge[1], breaker])
-        #else:
-        #    print False
             
     def DeleteFictiveEdges(self, starter, reverse = 0):
         [aNum, bNum] = starter
@@ -250,10 +213,9 @@ class ConstructTriangulation(BaseForm):
             abc1 = geo.countAngle(c1, b, a)
             ac2c1 = geo.countAngle(a, c2, c1)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:# or abc1 < geo.PI / 2:
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else:
-                self.IsBridge([aNum, c1Num], bNum)
                 self.IsFictiveEdge([aNum, c1Num], bNum)
 
                 self.neighbors[2][aNum].remove(c1Num)
@@ -273,10 +235,9 @@ class ConstructTriangulation(BaseForm):
             abc1 = geo.countAngle(a, b, c1)
             ac2c1 = geo.countAngle(c1, c2, a)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:# or abc1 < geo.PI / 2:
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
             else:
-                self.IsBridge([aNum, c1Num], bNum)
                 self.IsFictiveEdge([aNum, c1Num], bNum)
                     
                 self.neighbors[2][aNum].remove(c1Num)
@@ -340,11 +301,8 @@ class ConstructTriangulation(BaseForm):
         if reverse == 0:
             self.SewTriangles([starter[1], starter[0]], 1, "blue")
 
-    def GetNextStarter(self, useBridge = True):
-        if useBridge:
-            [fix, open, breaker] = self.bridges.pop(0)
-        else:
-            [fix, open, breaker] = self.fictiveEdges.pop(0)
+    def GetNextStarter(self):
+        [fix, open, breaker] = self.fictiveEdges.pop(0)
         
         center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
         
@@ -389,7 +347,7 @@ class ConstructTriangulation(BaseForm):
         #print open, endStarterNum
         return [open, endStarterNum]
 
-    def MergeTriangles(self, col = "black", wid = 1, useBridge = True):
+    def MergeTriangles(self, col = "black", wid = 1):
         draw.AllPoints(self.canvas, self.points)
         start = time()   
 
@@ -400,123 +358,78 @@ class ConstructTriangulation(BaseForm):
         
         all_starters = 0
         used_starters = 0
-        while((useBridge and len(self.bridges) != 0) or (not useBridge and len(self.fictiveEdges) != 0)):
-            starter = self.GetNextStarter(useBridge)
+        while(len(self.fictiveEdges)):
+            starter = self.GetNextStarter()
             all_starters += 1
 
-            if starter == -1:
-                continue
-            used_starters += 1
             if self.AddEdgeToPencil(starter):
+                used_starters += 1
                 self.SewTriangles(starter, 0, "#00CC33")
-            #else:
-            #    print useBridge, "edge exists"
-        
-        finish = time()
+            
+        fictiveTime = time() - start
 
         self.DrawStruct(col, wid)
         draw.AllPoints(self.canvas, self.points)
-        print "ok", used_starters, "/", all_starters
-        #nb = raw_input()
-
-        return finish - start
+        print "ok", used_starters, "/", all_starters, "time:", fictiveTime
+        return fictiveTime
         
     def Run(self):
-        #print "self.points[0] =", self.points[0]
-        #print "self.points[1] =", self.points[1]
-        
-        bridgeTime = -1
-        fictiveTime = -1
-        
-        # use bridges
         self.Preprocessing()
-        draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
-        bridgeTime = self.MergeTriangles()
-        #raw_input()
-
-        # use fictive edges
-        self.Preprocessing()
-        self.bridges = []
         self.fictiveEdges = []
-        self.canvas.delete("all")
         draw.Triangle(self.canvas, self.points[2], self.faces[2], "yellow", 3, 2)
         
-        fictiveTime = self.MergeTriangles(useBridge = False)
-        #raw_input()
+        fictiveTime = self.MergeTriangles()
+        return fictiveTime
 
-        return [bridgeTime, fictiveTime]
+    def IncreaseDistance(self, data):
+        for i in xrange(len(data) - 1):
+            for j in xrange(i + 1, len(data)):
+                cur = geo.getLength(data[i], data[j])
+                if cur <= geo.MINDIST:
+                    data[i] = []
+                    break
+                    
+        data = [x for x in data if len(x)]
+        return data
 
+    def GenerateData(self, n):
+        x = np.random.randint(0, self.width - 20, (n, 1)) + 10
+        y = np.random.randint(0, self.height - 60, (n, 1)) + 5
+        data = np.concatenate((x, y), axis = 1)
+        data = self.IncreaseDistance(data.tolist())
+        
+        delim = int(len(data) / 2)
+        self.points[0] = data[:delim]
+        self.points[1] = data[delim:]
+        
+    
     def Experiment(self):
         self.Reset()
         
         randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0:
-            # separeted triangle seam
-            #self.points[0] = [[147, 93], [226, 45], [253, 130], [149, 197], [78, 54]]
-            #self.points[1] = [[391, 124], [478, 133], [432, 181]]
-            
-            #example starter in report
-            #self.points[0] = [[208, 180], [151, 210], [175, 126], [252, 134], [236, 227]]
-            #self.points[1] = [[192, 203], [199, 147], [249, 187], [300, 158], [270, 236]]
-
             #model example in report
             #self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
             #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
             
             #circlic seam
-            #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
-            #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
+            self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
+            self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
-            # big example
-            #self.points[0] = [[144, 161], [272, 247], [70, 341], [360, 205], [474, 294], [87, 153], [351, 127], [543, 136], [468, 324], [447, 38], [571, 129], [176, 182], [179, 341], [452, 212], [95, 320], [31, 236], [265, 75], [548, 21], [364, 191], [111, 78], [369, 88], [454, 105], [42, 233], [49, 125], [503, 175], [56, 93], [92, 248], [474, 92], [19, 269], [467, 283], [427, 239], [463, 15], [232, 20], [405, 141], [135, 177], [483, 37], [440, 102], [184, 160], [553, 147], [338, 330], [121, 26], [306, 152], [137, 93], [107, 124], [448, 339], [481, 77], [397, 113], [570, 285], [11, 38], [343, 113], [379, 39], [16, 146], [238, 196], [481, 125], [24, 207], [97, 81], [535, 194], [114, 46], [80, 213], [512, 268], [72, 276], [185, 21], [429, 278], [90, 212], [75, 65], [512, 7], [287, 5], [532, 284], [371, 234], [455, 311], [367, 320], [31, 151], [406, 188], [359, 252], [457, 334], [479, 185], [39, 213], [236, 298], [217, 29], [123, 275], [508, 285], [294, 67], [375, 219], [462, 118], [196, 117], [15, 179], [318, 9], [525, 290], [121, 86], [47, 207], [321, 27], [539, 206], [74, 82], [33, 43], [360, 144], [50, 101], [392, 160], [550, 126], [38, 33], [159, 110]]
-            #self.points[1] = [[444, 249], [337, 338], [574, 206], [212, 173], [437, 275], [477, 118], [172, 163], [129, 232], [481, 143], [551, 65], [543, 12], [93, 88], [556, 85], [468, 236], [477, 86], [438, 159], [123, 288], [562, 14], [19, 57], [176, 256], [98, 302], [228, 343], [451, 52], [571, 211], [108, 62], [484, 243], [496, 250], [315, 342], [358, 264], [499, 39], [321, 283], [269, 228], [81, 81], [113, 245], [201, 296], [371, 250], [579, 263], [315, 105], [344, 48], [290, 57], [499, 251], [81, 238], [509, 109], [510, 246], [325, 128], [118, 302], [357, 16], [78, 217], [69, 133], [195, 343], [545, 232], [236, 231], [467, 341], [204, 329], [545, 301], [89, 166], [477, 159], [483, 49], [35, 314], [343, 327], [312, 188], [107, 244], [24, 120], [126, 165], [475, 120], [15, 72], [344, 97], [221, 44], [111, 246], [16, 182], [181, 71], [305, 267], [111, 10], [94, 187], [144, 308], [190, 105], [366, 277], [474, 231], [308, 111], [65, 17], [477, 343], [475, 81], [574, 39], [581, 36], [538, 330], [506, 167], [317, 123], [243, 213], [54, 181], [363, 113], [28, 214], [211, 337], [375, 146], [481, 279], [552, 193], [456, 270], [519, 183], [133, 20], [250, 15], [523, 95]]
-            
-            #self.points[0] = [[484, 230], [268, 43], [515, 237], [472, 191], [164, 285], [50, 331], [578, 200], [436, 21], [33, 276], [426, 179], [123, 13], [450, 216], [268, 218], [276, 97], [227, 331], [196, 176], [114, 338], [39, 326], [140, 76], [534, 295]]
-            #self.points[1] = [[400, 201], [281, 56], [281, 185], [538, 269], [45, 253], [185, 94], [433, 37], [390, 250], [548, 23], [405, 324], [568, 298], [329, 138], [422, 257], [361, 275], [469, 344], [140, 141], [433, 264], [314, 17], [95, 114], [49, 100]]
-        
-            # it doesn't work, there are intersections
-            #self.points[0] = [[457, 272], [90, 144], [321, 68], [383, 303], [75, 245], [315, 47], [109, 65], [197, 298], [376, 241], [441, 37], [298, 331], [436, 233], [122, 206], [224, 339], [553, 198], [38, 65], [470, 245], [27, 9], [183, 233], [519, 241], [286, 203], [283, 132], [443, 196], [458, 64], [233, 71], [254, 269], [251, 72], [409, 150], [493, 33], [313, 21], [24, 283], [105, 62], [537, 327], [318, 292], [217, 21], [40, 201], [425, 257], [11, 292], [89, 183], [341, 148], [149, 66], [442, 23], [565, 195], [132, 115], [22, 212], [384, 67], [101, 187], [576, 249], [472, 234], [128, 340]]
-            #self.points[1] = [[168, 157], [208, 337], [472, 234], [24, 39], [202, 230], [552, 173], [337, 44], [256, 47], [114, 124], [33, 37], [114, 103], [538, 93], [265, 7], [329, 333], [147, 108], [491, 334], [260, 240], [394, 182], [269, 186], [414, 241], [578, 282], [149, 292], [448, 57], [219, 80], [202, 316], [31, 206], [63, 268], [186, 162], [329, 85], [476, 199], [141, 257], [113, 174], [273, 30], [398, 5], [423, 340], [226, 49], [95, 237], [406, 12], [57, 63], [58, 27], [380, 7], [208, 21], [469, 102], [466, 57], [97, 225], [116, 194], [180, 117], [216, 50], [115, 305], [86, 127]]
-
-            # ERROR
-            self.points[0] = [[510, 24], [495, 254], [497, 91], [59, 321], [554, 205], [136, 7], [280, 111], [436, 136], [623, 342], [494, 99]]
-            self.points[1] = [[372, 19], [491, 339], [548, 177], [402, 269], [82, 314], [158, 99], [592, 189], [308, 242], [525, 135], [175, 136]]
-            
         else:
-            n = 1000
-            for i in xrange(2):
-                x = np.random.randint(0, self.width - 20, (n, 1)) + 10
-                y = np.random.randint(0, self.height - 60, (n, 1)) + 5
-                self.points[i] = np.concatenate((x, y), axis = 1)
+            n = 100
+            self.GenerateData(n)
 
-                self.SecondPointsSet()
-
-            self.points[0] = self.points[0].tolist()
-            self.points[1] = self.points[1].tolist()
-
-        draw.AllPoints(self.canvas, self.points)
-        
-        [bridgeTime, fictiveTime] = self.Run()
-        
-        print "sciPy", self.scipyTime
-        print "my   ", bridgeTime
-        print "new  ", fictiveTime
+        fictiveTime = self.Run()
+        print "scipy  ", self.scipyTime
+        print "fictive", fictiveTime
 
     def FindErrors(self):
-        n = 10
+        n = 10000
         while True:
             self.Reset()
-            
-            for i in xrange(2):
-                x = np.random.randint(0, self.width - 20, (n, 1)) + 10
-                y = np.random.randint(0, self.height - 60, (n, 1)) + 5
-                self.points[i] = np.concatenate((x, y), axis = 1)
-
-                self.SecondPointsSet()
-
-            self.points[0] = self.points[0].tolist()
-            self.points[1] = self.points[1].tolist()
+            self.GenerateData(n)
 
             try:
                 self.Run()
@@ -524,12 +437,11 @@ class ConstructTriangulation(BaseForm):
                 print "!!! ERROR !!!"
                 print "self.points[0] =", self.points[0]
                 print "self.points[1] =", self.points[1]
-                break
-
+                exit(1)
 
     def ExperimentTime(self) :
-        fout = open('res1.txt', 'w')
-        nPoints = [1000 * x for x in xrange(1, 2)]
+        fout = open('res.txt', 'w')
+        nPoints = [100 * x for x in xrange(1, 31)]
         counter = 0
         numIter = 1
         for n in nPoints :
@@ -538,25 +450,13 @@ class ConstructTriangulation(BaseForm):
                     counter = counter + 1
                     print counter
                     self.Reset()
-
-                    for i in xrange(2) :
-                        x = np.random.randint(0, self.width - 20, (n, 1)) + 10
-                        y = np.random.randint(0, self.height - 60, (n, 1)) + 5
-                
-                        self.points[i] = np.concatenate((x, y), axis = 1)
-
-                        self.SecondPointsSet()
-
-                    self.points[0] = self.points[0].tolist()
-                    self.points[1] = self.points[1].tolist()
+                    self.GenerateData(n)
 
                     try :
-                        [bridgeTime, fictiveTime] = self.Run()
-                        print "time: bridge ", bridgeTime
-                        print "time: fictive", fictiveTime
+                        fictiveTime = self.Run()
                         break
                     except :
                         print "exception"
                         pass
             print n
-            fout.write(str(n) + ' ' + str(self.scipyTime / numIter) + ' ' + str(bridgeTime / numIter) + ' ' + str(fictiveTime / numIter) + '\n')
+            fout.write(str(len(self.points[2])) + ' ' + str(self.scipyTime / numIter) + ' ' + str(fictiveTime / numIter) + '\n')

@@ -18,10 +18,7 @@ class BaseForm(object):
     neighFaces = [[], [], []]
     
     # data for detecting next starter
-    bridges = []
-    mst = [[], [], []]
     fictiveEdges = []
-    marginalPoints = []
     
     scipyTime = -1
 
@@ -44,15 +41,15 @@ class BaseForm(object):
         self.b2 = Button(self.root, bg = "white", fg = "black", text = "Triangulation", command = self.Run)
         self.b2.place(x = 200, y = _height - 50)
         
-        self.b3 = Button(self.root, bg = "white", fg = "black", text = "MST", command = self.ButtonHandlerMST)
-        self.b3.place(x = 350, y = _height - 50)
-
-        self.b4 = Button(self.root, bg = "white", fg = "black", text = "Experiment", command = self.Experiment)
-        self.b4.place(x = 425, y = _height - 50)
+        self.b3 = Button(self.root, bg = "white", fg = "black", text = "Experiment", command = self.Experiment)
+        self.b3.place(x = 325, y = _height - 50)
         
-        self.b5 = Button(self.root, bg = "white", fg = "black", text = "Errors", command = self.FindErrors)
-        self.b5.place(x = 550, y = _height - 50)
+        self.b4 = Button(self.root, bg = "white", fg = "black", text = "Errors", command = self.FindErrors)
+        self.b4.place(x = 425, y = _height - 50)
     
+        self.b5 = Button(self.root, bg = "white", fg = "black", text = "Time", command = self.ExperimentTime)
+        self.b5.place(x = 500, y = _height - 50)
+
     def ClickMouse(self, event):
         if not self.preprocessingDone:
             getX = event.x_root
@@ -80,11 +77,8 @@ class BaseForm(object):
         self.faces = [[], [], []]
         self.neighFaces = [[], [], []]
 
-        self.mst = [[], [], []]
-        self.bridges = []
         self.fictiveEdges = []
-        self.marginalPoints = []
-
+        
         self.scipyTime = -1
 
     def SecondPointsSet(self):
@@ -93,11 +87,11 @@ class BaseForm(object):
     def Run(self):
         raise NotImplementedError('This function must be implemented within child class!')
 
-    def ButtonHandlerMST(self):
-        raise NotImplementedError('This function must be implemented within child class!')
-
     def Experiment(self):
         raise NotImplementedError('This function must be implemented within child class!')
 
     def FindErrors(self):
+        raise NotImplementedError('This function must be implemented within child class!')
+
+    def ExperimentTime(self):
         raise NotImplementedError('This function must be implemented within child class!')
