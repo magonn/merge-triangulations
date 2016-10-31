@@ -449,7 +449,7 @@ class ConstructTriangulation(BaseForm):
     def Experiment(self):
         self.Reset()
         
-        randomPoints = 0 # 0 - example, 1 - rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0:
             # separeted triangle seam
@@ -525,3 +525,38 @@ class ConstructTriangulation(BaseForm):
                 print "self.points[0] =", self.points[0]
                 print "self.points[1] =", self.points[1]
                 break
+
+
+    def ExperimentTime(self) :
+        fout = open('res1.txt', 'w')
+        nPoints = [1000 * x for x in xrange(1, 2)]
+        counter = 0
+        numIter = 1
+        for n in nPoints :
+            for it in xrange(numIter) :
+                while True :
+                    counter = counter + 1
+                    print counter
+                    self.Reset()
+
+                    for i in xrange(2) :
+                        x = np.random.randint(0, self.width - 20, (n, 1)) + 10
+                        y = np.random.randint(0, self.height - 60, (n, 1)) + 5
+                
+                        self.points[i] = np.concatenate((x, y), axis = 1)
+
+                        self.SecondPointsSet()
+
+                    self.points[0] = self.points[0].tolist()
+                    self.points[1] = self.points[1].tolist()
+
+                    try :
+                        [bridgeTime, fictiveTime] = self.Run()
+                        print "time: bridge ", bridgeTime
+                        print "time: fictive", fictiveTime
+                        break
+                    except :
+                        print "exception"
+                        pass
+            print n
+            fout.write(str(n) + ' ' + str(self.scipyTime / numIter) + ' ' + str(bridgeTime / numIter) + ' ' + str(fictiveTime / numIter) + '\n')
