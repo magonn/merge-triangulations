@@ -21,6 +21,7 @@ class ConstructTriangulation(BaseForm):
     neighFaces = [[], [], []]
     
     # data for detecting next starter
+    neighbors = [[], [], []]
     fictiveEdges = []
     
     scipyTime = -1
@@ -37,6 +38,7 @@ class ConstructTriangulation(BaseForm):
         self.faces = [[], [], []]
         self.neighFaces = [[], [], []]
 
+        self.neighbors = [[], [], []]
         self.fictiveEdges = []
         
         self.scipyTime = -1
@@ -66,7 +68,7 @@ class ConstructTriangulation(BaseForm):
             #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
             
         self.CreateStruct()
-        draw.AllPoints(self.canvas, self.points)
+        #draw.AllPoints(self.canvas, self.points)
             
     def DrawStruct(self, col = "black", wid = 1):
         for i in xrange(len(self.points[2])):
@@ -193,10 +195,7 @@ class ConstructTriangulation(BaseForm):
         return True
         
     def AddEdgeToPencil(self, edge):
-        flag = True
-        for i in xrange(2):
-            flag = flag and self.AddPointToPencil(edge[i], edge[1 - i])
-        return flag
+        return self.AddPointToPencil(edge[0], edge[1]) and self.AddPointToPencil(edge[1], edge[0])
 
     def IsFictiveEdge(self, edge, breaker):
         [aNum, c1Num] = edge
@@ -373,7 +372,7 @@ class ConstructTriangulation(BaseForm):
         return [open, endStarterNum]
 
     def MergeTriangles(self):
-        draw.AllPoints(self.canvas, self.points)
+        #draw.AllPoints(self.canvas, self.points)
         start = time()   
 
         starter = self.GetFirstStarter()
@@ -393,6 +392,7 @@ class ConstructTriangulation(BaseForm):
             
         fictiveTime = time() - start
 
+        draw.Triangle(self.canvas, self.points[2], self.faces[2], "yellow", 3, 2)
         self.DrawStruct("black", 1)
         draw.AllPoints(self.canvas, self.points)
         print "ok", used_starters, "/", all_starters, "time:", fictiveTime
@@ -400,8 +400,6 @@ class ConstructTriangulation(BaseForm):
         
     def Run(self):
         self.Preprocessing()
-        draw.Triangle(self.canvas, self.points[2], self.faces[2], "yellow", 3, 2)
-        
         fictiveTime = self.MergeTriangles()
         return fictiveTime
 
