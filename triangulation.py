@@ -10,6 +10,36 @@ import geo
 import draw
 
 class ConstructTriangulation(BaseForm):
+    
+    preprocessingDone = False
+
+    # in experement mode do not remove last point (click on button)
+    experimentMode = False
+
+    # data for creation structure
+    faces = [[], [], []]
+    neighFaces = [[], [], []]
+    
+    # data for detecting next starter
+    fictiveEdges = []
+    
+    scipyTime = -1
+
+    def Reset(self):
+        self.canvas.delete("all")
+
+        self.firstPointsSet = True
+        self.preprocessingDone = False
+        self.experimentMode = True
+        
+        self.points = [[], [], []]
+
+        self.faces = [[], [], []]
+        self.neighFaces = [[], [], []]
+
+        self.fictiveEdges = []
+        
+        self.scipyTime = -1
 
     def Preprocessing(self):
     	if not self.preprocessingDone:
@@ -23,8 +53,7 @@ class ConstructTriangulation(BaseForm):
                 self.faces[i] = tri.vertices
                 self.neighFaces[i] = tri.neighbors
                 #draw.Triangle(self.canvas, self.points[i], self.faces[i], "black", 1, i)
-                #raw_input()
-            
+                
             self.points[2].extend(self.points[0])
             self.points[2].extend(self.points[1])
 
@@ -72,7 +101,7 @@ class ConstructTriangulation(BaseForm):
                 for j in xrange(1, 4):
                     n = len(temp[tempFace[j]])
                     if n == 0:
-                        angle = geo.exteriorProd(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
+                        angle = geo.ExteriorProd(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
                         if angle < 0:
                             temp[tempFace[j]] = [tempFace[j - 1], tempFace[j + 1]]
                         else:
@@ -152,7 +181,7 @@ class ConstructTriangulation(BaseForm):
         numPoints = len(self.neighbors[2][where])
         resAngle = []
         for j in xrange(numPoints):
-            res = geo.countAngle(self.points[2][self.neighbors[2][where][j]], self.points[2][where], self.points[2][pNum])
+            res = geo.CountAngle(self.points[2][self.neighbors[2][where][j]], self.points[2][where], self.points[2][pNum])
             resAngle.append(res)
         
         if len(resAngle) == 0:
@@ -170,7 +199,6 @@ class ConstructTriangulation(BaseForm):
         return flag
 
     def IsFictiveEdge(self, edge, breaker):
-        #print "edge", edge,
         [aNum, c1Num] = edge
         
         num1 = int(aNum >= len(self.points[0]))
@@ -188,8 +216,8 @@ class ConstructTriangulation(BaseForm):
         c2Num = self.neighbors[num][aNum][(idx - 1) % numPoints]
         dNum = self.neighbors[num][aNum][(idx + 1) % numPoints]
 
-        adc1 = geo.countAngle(self.points[num][c1Num], self.points[num][dNum], self.points[num][aNum])
-        ac2c1 = geo.countAngle(self.points[num][aNum], self.points[num][c2Num], self.points[num][c1Num])
+        adc1 = geo.CountAngle(self.points[num][c1Num], self.points[num][dNum], self.points[num][aNum])
+        ac2c1 = geo.CountAngle(self.points[num][aNum], self.points[num][c2Num], self.points[num][c1Num])
 
         if (adc1 <= geo.PI / 2  or adc1 > geo.PI) and (ac2c1 <= geo.PI / 2 or ac2c1 > geo.PI):
             self.fictiveEdges.append([edge[0], edge[1], breaker])
@@ -210,8 +238,8 @@ class ConstructTriangulation(BaseForm):
             if c1Num == bNum or c2Num == bNum:
                 break
                 
-            abc1 = geo.countAngle(c1, b, a)
-            ac2c1 = geo.countAngle(a, c2, c1)
+            abc1 = geo.CountAngle(c1, b, a)
+            ac2c1 = geo.CountAngle(a, c2, c1)
             
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
@@ -232,8 +260,8 @@ class ConstructTriangulation(BaseForm):
             if c1Num == bNum or c2Num == bNum:
                 break
                 
-            abc1 = geo.countAngle(a, b, c1)
-            ac2c1 = geo.countAngle(c1, c2, a)
+            abc1 = geo.CountAngle(a, b, c1)
+            ac2c1 = geo.CountAngle(c1, c2, a)
             
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
                 break
@@ -268,8 +296,8 @@ class ConstructTriangulation(BaseForm):
             dNum = self.neighbors[2][bNum][(idx2 + 1) % len(self.neighbors[2][bNum])]
             d = self.points[2][dNum]
             
-            acb = geo.countAngle(a, c, b)
-            adb = geo.countAngle(a, d, b)
+            acb = geo.CountAngle(a, c, b)
+            adb = geo.CountAngle(a, d, b)
 
             if (cNum != bNum) and ((acb > adb and acb < geo.PI) or (adb >= geo.PI and acb < geo.PI)): # CB is edge
                 #draw.Edge(self.canvas, self.points[2][cNum], self.points[2][bNum], colorEdge, 2)
@@ -309,8 +337,8 @@ class ConstructTriangulation(BaseForm):
         openPoint = self.points[2][open]
         fixPoint = self.points[2][fix]
 
-        radiusBridge = geo.getLength(center, openPoint)
-        bridgeParameters = geo.lineParameters(openPoint, center)
+        radiusBridge = geo.GetLength(center, openPoint)
+        bridgeParameters = geo.LineParameters(openPoint, center)
         
         #draw.Edge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
         #draw.Point(self.canvas, self.points[2][breaker], "green", 5)
@@ -332,22 +360,19 @@ class ConstructTriangulation(BaseForm):
 
             if nP not in visited:
                 visited.add(nP)
-                radius = geo.radiusByLineAndPoint(bridgeParameters, radiusBridge, center, openPoint, p)
-                #draw.Point(self.canvas, center, "purple", 5)
-                #print "radius", radius
+                radius = geo.RadiusByLineAndPoint(bridgeParameters, radiusBridge, center, openPoint, p)
                 if radius != -1 and (minRadius == -1 or radius < minRadius):
                     minRadius = radius
                     endStarterNum = nP
 
                 for test in self.neighbors[2][nP]:
-                    if geo.getLength(center, self.points[2][test]) < radiusBridge:
+                    if geo.GetLength(center, self.points[2][test]) < radiusBridge:
                         checkPoints.put(test)
 
         #draw.Edge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
-        #print open, endStarterNum
         return [open, endStarterNum]
 
-    def MergeTriangles(self, col = "black", wid = 1):
+    def MergeTriangles(self):
         draw.AllPoints(self.canvas, self.points)
         start = time()   
 
@@ -368,14 +393,13 @@ class ConstructTriangulation(BaseForm):
             
         fictiveTime = time() - start
 
-        self.DrawStruct(col, wid)
+        self.DrawStruct("black", 1)
         draw.AllPoints(self.canvas, self.points)
         print "ok", used_starters, "/", all_starters, "time:", fictiveTime
         return fictiveTime
         
     def Run(self):
         self.Preprocessing()
-        self.fictiveEdges = []
         draw.Triangle(self.canvas, self.points[2], self.faces[2], "yellow", 3, 2)
         
         fictiveTime = self.MergeTriangles()
@@ -384,7 +408,7 @@ class ConstructTriangulation(BaseForm):
     def IncreaseDistance(self, data):
         for i in xrange(len(data) - 1):
             for j in xrange(i + 1, len(data)):
-                cur = geo.getLength(data[i], data[j])
+                cur = geo.GetLength(data[i], data[j])
                 if cur <= geo.MINDIST:
                     data[i] = []
                     break
@@ -402,7 +426,6 @@ class ConstructTriangulation(BaseForm):
         self.points[0] = data[:delim]
         self.points[1] = data[delim:]
         
-    
     def Experiment(self):
         self.Reset()
         

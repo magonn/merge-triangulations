@@ -5,22 +5,8 @@ import draw
 class BaseForm(object):
     # input first set of points
     firstPointsSet = True
-
-    preprocessingDone = False
-
-    # in experement mode do not remove last point (click on button)
-    experimentMode = False
-
+    
     points = [[], [], []]
-
-    # data for creation structure
-    faces = [[], [], []]
-    neighFaces = [[], [], []]
-    
-    # data for detecting next starter
-    fictiveEdges = []
-    
-    scipyTime = -1
 
     def __init__(self, _width = 600, _height = 400):
         self.root = Tk()
@@ -65,22 +51,6 @@ class BaseForm(object):
             self.points[not self.firstPointsSet].append(p)
             draw.Point(self.canvas, p, "black", 3, not self.firstPointsSet)
     
-    def Reset(self):
-        self.canvas.delete("all")
-
-        self.firstPointsSet = True
-        self.preprocessingDone = False
-        self.experimentMode = True
-        
-        self.points = [[], [], []]
-
-        self.faces = [[], [], []]
-        self.neighFaces = [[], [], []]
-
-        self.fictiveEdges = []
-        
-        self.scipyTime = -1
-
     def SecondPointsSet(self):
         self.firstPointsSet = False
 
