@@ -396,14 +396,12 @@ class ConstructTriangulation(BaseForm):
             
         fictiveTime = time() - start
 
-        draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
+        #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
         self.DrawStruct("black", 1)
         draw.AllPoints(self.canvas, self.points)
 
-        if self.CheckTriangle():
-            print "ok; n =", len(self.points[2]), used_starters, "/", all_starters, "time:", fictiveTime
-        else:
-            raise Exception("wrong output struct")
+        self.CheckTriangle()
+        print "ok; n =", len(self.points[2]), used_starters, "/", all_starters, "time:", fictiveTime
         return fictiveTime
     
     def CheckTriangle(self):
@@ -413,16 +411,16 @@ class ConstructTriangulation(BaseForm):
 
             n = len(fictiveRes)
             if (n != len(rightRes)):
-                print "res", fictiveRes, "ans", rightRes
-                return False
-
+                draw.Circle(self.canvas, self.points[2][i], "green4", 5, 0)
+                print "### cur", i, "res", fictiveRes, "ans", rightRes
+                raise Exception("wrong output len")
+                
             idx = rightRes.index(fictiveRes[0])
             for j in xrange(n):
                 if fictiveRes[j] != rightRes[(idx + j) % n]:
+                    draw.Circle(self.canvas, self.points[2][i], "VioletRed1", 5, 0)
                     print "res", fictiveRes, "ans", rightRes
-                    return False
-            
-        return True
+                    raise Exception("wrong output struct")
 
     def Run(self):
         self.Preprocessing()
@@ -453,27 +451,37 @@ class ConstructTriangulation(BaseForm):
     def Experiment(self):
         self.Reset()
         
-        randomPoints = 1 # 0 - example, 1 - rand
+        randomPoints = 0 # 0 - example, 1 - rand
 
         if randomPoints == 0:
-            #model example in report
+            # model example in report
             #self.points[0] = [[139, 243], [173, 169], [237, 195], [211, 230], [275, 231], [224, 273], [178, 279], [228, 149], [286, 195], [291, 143], [333, 169], [312, 187], [355, 218], [327, 254], [293, 279], [369, 261], [394, 191], [356, 139]]
             #self.points[1] = [[187, 255], [198, 193], [248, 251], [264, 173], [315, 226], [329, 294], [262, 302], [404, 236], [358, 186], [323, 119], [411, 151], [398, 294]]
             
-            #circlic seam
-            self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
-            self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
+            # circlic seam
+            #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
+            #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
+
+            # Error
+            #self.points[0] = [[200, 142], [384, 182], [467, 277], [15, 160], [234, 147]]
+            #self.points[1] = [[201, 270], [509, 277], [315, 241], [262, 79], [54, 277]]
+            self.points[0] = [[204, 191], [397, 243], [348, 130], [145, 80], [501, 24]]
+            self.points[1] = [[495, 24], [194, 89], [443, 233], [211, 239], [270, 60]]
 
         else:
             n = 100
             self.GenerateData(n)
 
-        fictiveTime = self.Run()
-        print "scipy  ", self.scipyTime
-        print "fictive", fictiveTime
+        try:
+            self.Run()
+        except Exception as error:
+            print "!!! ERROR !!!"
+            print "self.points[0] =", self.points[0]
+            print "self.points[1] =", self.points[1]
+            print error
 
     def FindErrors(self):
-        n = 100
+        n = 10
         while True:
             self.Reset()
             self.GenerateData(n)
@@ -493,18 +501,16 @@ class ConstructTriangulation(BaseForm):
         counter = 0
         numIter = 1
         for n in nPoints :
-            for it in xrange(numIter) :
-                while True :
-                    counter = counter + 1
-                    print counter
-                    self.Reset()
-                    self.GenerateData(n)
+            while True :
+                counter = counter + 1
+                print "iter", counter
+                self.Reset()
+                self.GenerateData(n)
 
-                    try :
-                        fictiveTime = self.Run()
-                        break
-                    except:
-                        print "exception"
-                        pass
-            print n
+                try :
+                    fictiveTime = self.Run()
+                    break
+                except Exception as error:
+                    print error
+                    pass
             fout.write(str(len(self.points[2])) + ' ' + str(self.scipyTime / numIter) + ' ' + str(fictiveTime / numIter) + '\n')
