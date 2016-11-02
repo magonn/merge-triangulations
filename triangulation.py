@@ -302,7 +302,7 @@ class ConstructTriangulation(BaseForm):
             acb = geo.CountAngle(a, c, b)
             adb = geo.CountAngle(a, d, b)
 
-            if (cNum != bNum) and ((acb > adb and acb < geo.PI) or (adb >= geo.PI and acb < geo.PI)): # CB is edge
+            if (cNum != bNum) and 0 < acb and acb < geo.PI and (acb > adb or adb >= geo.PI): # CB is edge
                 #draw.Edge(self.canvas, self.points[2][cNum], self.points[2][bNum], colorEdge, 2)
                 #raw_input()
 
@@ -314,7 +314,7 @@ class ConstructTriangulation(BaseForm):
                 else:
                     aNum = cNum
                     a = c
-            elif (aNum != dNum) and (acb < adb and  adb < geo.PI) or (acb >= geo.PI and adb < geo.PI): # AD is edge
+            elif (aNum != dNum) and 0 < adb and adb < geo.PI and (acb < adb or acb >= geo.PI): # AD is edge
                 #draw.Edge(self.canvas, self.points[2][aNum], self.points[2][dNum], colorEdge, 2)
                 #raw_input()
 
@@ -376,7 +376,6 @@ class ConstructTriangulation(BaseForm):
         return [open, endStarterNum]
 
     def MergeTriangles(self):
-        #draw.AllPoints(self.canvas, self.points)
         start = time()   
 
         starter = self.GetFirstStarter()
@@ -400,8 +399,9 @@ class ConstructTriangulation(BaseForm):
         self.DrawStruct("black", 1)
         draw.AllPoints(self.canvas, self.points)
 
-        self.CheckTriangle()
-        print "ok; n =", len(self.points[2]), used_starters, "/", all_starters, "time:", fictiveTime
+        if self.CheckTriangle():
+            print "ok; n =", len(self.points[2]), used_starters, "/", all_starters, "time:", fictiveTime
+
         return fictiveTime
     
     def CheckTriangle(self):
@@ -421,19 +421,25 @@ class ConstructTriangulation(BaseForm):
                     draw.Circle(self.canvas, self.points[2][i], "VioletRed1", 5, 0)
                     print "res", fictiveRes, "ans", rightRes
                     raise Exception("wrong output struct")
+        return True
 
     def Run(self):
+        draw.AllPoints(self.canvas, self.points)
         self.Preprocessing()
         fictiveTime = self.MergeTriangles()
         return fictiveTime
 
     def IncreaseDistance(self, data):
+        self.minDist = geo.GetLength([0, 0], [self.width, self.height])
+
         for i in xrange(len(data) - 1):
             for j in xrange(i + 1, len(data)):
                 cur = geo.GetLength(data[i], data[j])
                 if cur <= geo.MINDIST:
                     data[i] = []
                     break
+                if cur < self.minDist:
+                    self.minDist = cur
                     
         data = [x for x in data if len(x)]
         return data
@@ -462,11 +468,13 @@ class ConstructTriangulation(BaseForm):
             #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
             #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
-            # Error
-            #self.points[0] = [[200, 142], [384, 182], [467, 277], [15, 160], [234, 147]]
-            #self.points[1] = [[201, 270], [509, 277], [315, 241], [262, 79], [54, 277]]
-            self.points[0] = [[204, 191], [397, 243], [348, 130], [145, 80], [501, 24]]
-            self.points[1] = [[495, 24], [194, 89], [443, 233], [211, 239], [270, 60]]
+            # error: not in list
+            self.points[0] = [[203, 184], [584, 23], [109, 40], [312, 39], [558, 314]]
+            self.points[1] = [[544, 21], [336, 5], [427, 108], [226, 141], [110, 27]]
+
+            # error: intersection
+            #self.points[0] = [[349, 82], [48, 218], [156, 284], [51, 258], [64, 172]]
+            #self.points[1] = [[110, 125], [69, 139], [129, 206], [61, 185], [135, 152]]
 
         else:
             n = 100
