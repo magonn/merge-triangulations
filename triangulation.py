@@ -19,7 +19,8 @@ class ConstructTriangulation(BaseForm):
     # data for creation structure
     faces = [[], [], []]
     neighFaces = [[], [], []]
-    
+    answer = []
+
     # data for detecting next starter
     neighbors = [[], [], []]
     fictiveEdges = []
@@ -37,6 +38,7 @@ class ConstructTriangulation(BaseForm):
 
         self.faces = [[], [], []]
         self.neighFaces = [[], [], []]
+        self.answer = []
 
         self.neighbors = [[], [], []]
         self.fictiveEdges = []
@@ -45,8 +47,6 @@ class ConstructTriangulation(BaseForm):
 
     def Preprocessing(self):
     	if not self.preprocessingDone:
-            self.preprocessingDone = True
-            
             for i in xrange(2):
                 if not self.experimentMode:
                     self.points[i].pop(len(self.points[i]) - 1)
@@ -61,14 +61,15 @@ class ConstructTriangulation(BaseForm):
 
             start = time()
             tri = Delaunay(self.points[2])
+            self.scipyTime = time() - start
+            
             self.faces[2] = tri.vertices
             self.neighFaces[2] = tri.neighbors
-            self.scipyTime = time() - start
-
+            
             #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
             
         self.CreateStruct()
-        #draw.AllPoints(self.canvas, self.points)
+        self.preprocessingDone = True
             
     def DrawStruct(self, col = "black", wid = 1):
         for i in xrange(len(self.points[2])):
@@ -77,63 +78,65 @@ class ConstructTriangulation(BaseForm):
                 draw.Edge(self.canvas, p1, self.points[2][j], col, wid, 0)
 
     def CreateStruct(self):
-        self.neighbors = [[], [], []]
-
-        for i in xrange(2):
-            temp = [[] for x in xrange(len(self.points[i]))]
-            flag = [False for x in xrange(len(self.faces[i]))]
+        if not self.preprocessingDone:
+            for i in xrange(3):
+                temp = [[] for x in xrange(len(self.points[i]))]
+                flag = [False for x in xrange(len(self.faces[i]))]
             
-            queue = Queue.Queue()
-            queue.put(0)
+                queue = Queue.Queue()
+                queue.put(0)
 
-            while not queue.empty():
-                cur = queue.get()
-                if flag[cur] == True:
-                    continue
+                while not queue.empty():
+                    cur = queue.get()
+                    if flag[cur] == True:
+                        continue
 
-                flag[cur] = True
-                
-                for j in xrange(3):
-                    if self.neighFaces[i][cur][j] != -1 and flag[self.neighFaces[i][cur][j]] == False:
-                        queue.put(self.neighFaces[i][cur][j])
+                    flag[cur] = True
+                    
+                    for j in xrange(3):
+                        if self.neighFaces[i][cur][j] != -1 and flag[self.neighFaces[i][cur][j]] == False:
+                            queue.put(self.neighFaces[i][cur][j])
 
-                x = self.faces[i][cur]
-                tempFace = [x[0], x[1], x[2], x[0], x[1]]
-                
-                for j in xrange(1, 4):
-                    n = len(temp[tempFace[j]])
-                    if n == 0:
-                        angle = geo.ExteriorProd(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
-                        if angle < 0:
-                            temp[tempFace[j]] = [tempFace[j - 1], tempFace[j + 1]]
+                    x = self.faces[i][cur]
+                    tempFace = [x[0], x[1], x[2], x[0], x[1]]
+                    
+                    for j in xrange(1, 4):
+                        n = len(temp[tempFace[j]])
+                        if n == 0:
+                            angle = geo.ExteriorProd(self.points[i][tempFace[j - 1]], self.points[i][tempFace[j]], self.points[i][tempFace[j + 1]])
+                            if angle < 0:
+                                temp[tempFace[j]] = [tempFace[j - 1], tempFace[j + 1]]
+                            else:
+                                temp[tempFace[j]] = [tempFace[j + 1], tempFace[j - 1]]
                         else:
-                            temp[tempFace[j]] = [tempFace[j + 1], tempFace[j - 1]]
-                    else:
-                        c1 = temp[tempFace[j]].count(tempFace[j - 1])
-                        c2 = temp[tempFace[j]].count(tempFace[j + 1])
-                        
-                        if temp[tempFace[j]][0] == tempFace[j - 1] and c2 == 0:
-                            temp[tempFace[j]].insert(0, tempFace[j + 1])
-                            c2 = 1
+                            c1 = temp[tempFace[j]].count(tempFace[j - 1])
+                            c2 = temp[tempFace[j]].count(tempFace[j + 1])
+                            
+                            if temp[tempFace[j]][0] == tempFace[j - 1] and c2 == 0:
+                                temp[tempFace[j]].insert(0, tempFace[j + 1])
+                                c2 = 1
 
-                        elif temp[tempFace[j]][0] == tempFace[j + 1] and c1 == 0:
-                            temp[tempFace[j]].insert(0, tempFace[j - 1])
-                            c1 = 1
+                            elif temp[tempFace[j]][0] == tempFace[j + 1] and c1 == 0:
+                                temp[tempFace[j]].insert(0, tempFace[j - 1])
+                                c1 = 1
 
-                        elif temp[tempFace[j]][n - 1] == tempFace[j - 1] and c2 == 0:
-                            temp[tempFace[j]].insert(n, tempFace[j + 1])
-                            c2 = 1
+                            elif temp[tempFace[j]][n - 1] == tempFace[j - 1] and c2 == 0:
+                                temp[tempFace[j]].insert(n, tempFace[j + 1])
+                                c2 = 1
 
-                        elif temp[tempFace[j]][n - 1] == tempFace[j + 1] and c1 == 0:
-                            temp[tempFace[j]].insert(n, tempFace[j - 1])
-                            c1 = 1
+                            elif temp[tempFace[j]][n - 1] == tempFace[j + 1] and c1 == 0:
+                                temp[tempFace[j]].insert(n, tempFace[j - 1])
+                                c1 = 1
 
-                        if c1 == 0 or c2 == 0:
-                            flag[cur] = False
-                            queue.put(cur)
+                            if c1 == 0 or c2 == 0:
+                                flag[cur] = False
+                                queue.put(cur)
 
-            self.neighbors[i] = temp
+                self.neighbors[i] = temp
 
+            self.answer = self.neighbors[2]
+
+        # save only initial struct
         self.neighbors[2] = [[] for i in xrange(len(self.points[2]))]
 
         for i in xrange(2):
@@ -204,6 +207,7 @@ class ConstructTriangulation(BaseForm):
         num2 = int(c1Num >= len(self.points[0]))
         
         if num1 != num2:
+            print "Noooooooooooooo"
             return
         num = num1
         
@@ -392,12 +396,34 @@ class ConstructTriangulation(BaseForm):
             
         fictiveTime = time() - start
 
-        draw.Triangle(self.canvas, self.points[2], self.faces[2], "yellow", 3, 2)
+        draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
         self.DrawStruct("black", 1)
         draw.AllPoints(self.canvas, self.points)
-        print "ok", used_starters, "/", all_starters, "time:", fictiveTime
+
+        if self.CheckTriangle():
+            print "ok; n =", len(self.points[2]), used_starters, "/", all_starters, "time:", fictiveTime
+        else:
+            raise Exception("wrong output struct")
         return fictiveTime
-        
+    
+    def CheckTriangle(self):
+        for i in xrange(len(self.neighbors[2])):
+            fictiveRes = self.neighbors[2][i]
+            rightRes = self.answer[i]
+
+            n = len(fictiveRes)
+            if (n != len(rightRes)):
+                print "res", fictiveRes, "ans", rightRes
+                return False
+
+            idx = rightRes.index(fictiveRes[0])
+            for j in xrange(n):
+                if fictiveRes[j] != rightRes[(idx + j) % n]:
+                    print "res", fictiveRes, "ans", rightRes
+                    return False
+            
+        return True
+
     def Run(self):
         self.Preprocessing()
         fictiveTime = self.MergeTriangles()
@@ -447,17 +473,18 @@ class ConstructTriangulation(BaseForm):
         print "fictive", fictiveTime
 
     def FindErrors(self):
-        n = 10000
+        n = 100
         while True:
             self.Reset()
             self.GenerateData(n)
 
             try:
                 self.Run()
-            except:
+            except Exception as error:
                 print "!!! ERROR !!!"
                 print "self.points[0] =", self.points[0]
                 print "self.points[1] =", self.points[1]
+                print error
                 exit(1)
 
     def ExperimentTime(self) :
@@ -476,7 +503,7 @@ class ConstructTriangulation(BaseForm):
                     try :
                         fictiveTime = self.Run()
                         break
-                    except :
+                    except:
                         print "exception"
                         pass
             print n
