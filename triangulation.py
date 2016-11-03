@@ -176,12 +176,12 @@ class ConstructTriangulation(BaseForm):
             for j in xrange(len(self.points[i])):
                 p = self.points[i][j]
                 tempStarter = self.points[i][twoStarter[i]]
-                if (p[0] < tempStarter[0]) or (p[0] == tempStarter[0] and p[1] > tempStarter[1]):
+                if geo.LeftPoint(p, tempStarter):
                     twoStarter[i] = j
         
         pTwoStarter = [self.points[0][twoStarter[0]], self.points[1][twoStarter[1]]]
-        fixPoint = (pTwoStarter[0][0] < pTwoStarter[1][0]) or (pTwoStarter[0][0] == pTwoStarter[1][0] and (pTwoStarter[0][1] > pTwoStarter[1][1]))
-        
+        fixPoint = geo.LeftPoint(pTwoStarter[0], pTwoStarter[1])
+
         pEndFixPoint = pTwoStarter[1 - fixPoint]
         endFixPoint = twoStarter[1 - fixPoint]
         
@@ -197,7 +197,6 @@ class ConstructTriangulation(BaseForm):
                 endFixPoint = j
                 pEndFixPoint = p
                 
-        pRes = [pTwoStarter[fixPoint], pEndFixPoint]
         if fixPoint == 1:
             res = [endFixPoint, twoStarter[1]]
         else:
