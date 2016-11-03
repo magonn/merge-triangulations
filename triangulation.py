@@ -144,6 +144,32 @@ class ConstructTriangulation(BaseForm):
                 for k in xrange(len(self.neighbors[i][j])):
                     self.neighbors[2][i * len(self.points[0]) + j].append(self.neighbors[i][j][k] + i * len(self.points[0]))
 
+    """def SetLeft(self):
+        leftNum = [0, 0]
+        left = [[], []]
+        for i in xrange(2):
+            resNum = 0
+            res = self.points[i][resNum]
+            for j in xrange(len(self.points[i])):
+                test = self.points[i][j]
+                if (geo.LeftPoint(test, res)):
+                    resNum = j
+                    res = test
+            leftNum[i] = resNum
+            left[i] = res
+        
+        leftNum[1] += len(self.points[0])
+        
+        if geo.LeftPoint(left[0], left[1]):
+            [breakerNum, openNum] = leftNum
+            [breaker, open] = left
+        else:
+            [openNum, breakerNum] = leftNum
+            [open, breaker] = left
+
+        fix = [open[0] - geo.GetLength(breaker, open) - geo.MINDIST, open[1]]
+        self.fictiveEdges.append([fix, openNum, breakerNum])"""
+
     def GetFirstStarter(self):
         twoStarter = [0, 0]
         for i in xrange(2):
@@ -223,7 +249,7 @@ class ConstructTriangulation(BaseForm):
         ac2c1 = geo.CountAngle(self.points[num][aNum], self.points[num][c2Num], self.points[num][c1Num])
 
         if (adc1 <= geo.PI / 2  or adc1 > geo.PI) and (ac2c1 <= geo.PI / 2 or ac2c1 > geo.PI):
-            self.fictiveEdges.append([edge[0], edge[1], breaker])
+            self.fictiveEdges.append([self.points[2][edge[0]], edge[1], breaker])
             
     def DeleteFictiveEdges(self, starter, reverse = 0):
         [aNum, bNum] = starter
@@ -332,52 +358,59 @@ class ConstructTriangulation(BaseForm):
         if reverse == 0:
             self.SewTriangles([starter[1], starter[0]], 1, "blue")
 
-    def GetNextStarter(self):
-        [fix, open, breaker] = self.fictiveEdges.pop(0)
-        
-        center = [(self.points[2][open][0] + self.points[2][fix][0]) / 2, (self.points[2][open][1] + self.points[2][fix][1]) / 2]
-        
-        openPoint = self.points[2][open]
-        fixPoint = self.points[2][fix]
-
-        radiusBridge = geo.GetLength(center, openPoint)
-        bridgeParameters = geo.LineParameters(openPoint, center)
-        
-        #draw.Edge(self.canvas, self.points[2][fix], self.points[2][open], "red", 3)
-        #draw.Point(self.canvas, self.points[2][breaker], "green", 5)
-        #draw.Circle(self.canvas, center, "blue", wid = radiusBridge)
-        #draw.AllPoints(self.canvas, self.points)
-        #raw_input()
-
+    def GetStarterEnd(self, breakerNum, bridgeParameters, radiusBridge, center, open):
+        num = int(breakerNum >= len(self.points[0]))
+        shift = num * len(self.points[0])
         checkPoints = Queue.Queue()
-        checkPoints.put(breaker)
+        checkPoints.put(breakerNum - shift)
 
         visited = set()
 
         minRadius = -1
         endStarterNum = -1
-
+        
         while not checkPoints.empty():
-            nP = checkPoints.get()
-            p = self.points[2][nP]
-
-            if nP not in visited:
-                visited.add(nP)
-                radius = geo.RadiusByLineAndPoint(bridgeParameters, radiusBridge, center, openPoint, p)
+            pNum = checkPoints.get()
+            
+            if pNum not in visited:
+                visited.add(pNum)
+                
+                p = self.points[num][pNum]
+                radius = geo.RadiusByLineAndPoint(bridgeParameters, radiusBridge, center, open, p)
                 if radius != -1 and (minRadius == -1 or radius < minRadius):
                     minRadius = radius
-                    endStarterNum = nP
+                    endStarterNum = pNum
 
-                for test in self.neighbors[2][nP]:
-                    if geo.GetLength(center, self.points[2][test]) < radiusBridge:
+                for test in self.neighbors[num][pNum]:
+                    if geo.GetLength(center, self.points[num][test]) < radiusBridge and test not in visited:
                         checkPoints.put(test)
 
-        #draw.Edge(self.canvas, self.points[2][open], self.points[2][endStarterNum], "purple", 3)
-        return [open, endStarterNum]
+        return endStarterNum + shift
+
+    def GetNextStarter(self):
+        [fix, openNum, breakerNum] = self.fictiveEdges.pop(0)
+        #draw.Point(self.canvas, fix, "red", 3)
+        
+        open = self.points[2][openNum]
+        
+        center = [(open[0] + fix[0]) / 2, (open[1] + fix[1]) / 2]
+        
+        bridgeParameters = geo.LineParameters(open, center)
+        radiusBridge = geo.GetLength(open, center)
+
+        #draw.Edge(self.canvas, openPoint, fixPoint, "red", 3)
+        #draw.Circle(self.canvas, center, "blue", wid = radiusBridge)
+        #draw.AllPoints(self.canvas, self.points)
+        #raw_input()
+
+        endStarterNum = self.GetStarterEnd(breakerNum, bridgeParameters, radiusBridge, center, open)
+        #draw.Edge(self.canvas, open, self.points[2][endStarterNum], "purple", 3)
+        #print len(self.points[0]), openNum, endStarterNum
+        return [openNum, endStarterNum]
 
     def MergeTriangles(self):
-        start = time()   
-
+        draw.AllPoints(self.canvas, self.points)
+        start = time()
         starter = self.GetFirstStarter()
         self.AddEdgeToPencil(starter)
 
@@ -392,7 +425,7 @@ class ConstructTriangulation(BaseForm):
             if self.AddEdgeToPencil(starter):
                 used_starters += 1
                 self.SewTriangles(starter, 0, "#00CC33")
-            
+
         fictiveTime = time() - start
 
         #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
@@ -424,7 +457,6 @@ class ConstructTriangulation(BaseForm):
         return True
 
     def Run(self):
-        draw.AllPoints(self.canvas, self.points)
         self.Preprocessing()
         fictiveTime = self.MergeTriangles()
         return fictiveTime
@@ -469,25 +501,21 @@ class ConstructTriangulation(BaseForm):
             #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
             # error: not in list
-            self.points[0] = [[203, 184], [584, 23], [109, 40], [312, 39], [558, 314]]
-            self.points[1] = [[544, 21], [336, 5], [427, 108], [226, 141], [110, 27]]
+            #self.points[0] = [[203, 184], [584, 23], [109, 40], [312, 39], [558, 314]]
+            #self.points[1] = [[544, 21], [336, 5], [427, 108], [226, 141], [110, 27]]
 
             # error: intersection
             #self.points[0] = [[349, 82], [48, 218], [156, 284], [51, 258], [64, 172]]
             #self.points[1] = [[110, 125], [69, 139], [129, 206], [61, 185], [135, 152]]
+            self.points[0] = [[265, 9], [456, 9], [523, 87], [105, 331], [85, 89]]
+            self.points[1] = [[464, 326], [546, 48], [245, 241], [382, 9], [540, 211]]
 
         else:
-            n = 100
+            n = 10
             self.GenerateData(n)
 
-        try:
-            self.Run()
-        except Exception as error:
-            print "!!! ERROR !!!"
-            print "self.points[0] =", self.points[0]
-            print "self.points[1] =", self.points[1]
-            print error
-
+        self.Run()
+        
     def FindErrors(self):
         n = 10
         while True:

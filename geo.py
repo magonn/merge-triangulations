@@ -85,3 +85,6 @@ def RadiusByLineAndPoint(line, radius, center, openPoint, checkPoint):
         return GetLength(pIntersect, checkPoint)
     else :
         return -1
+
+#def LeftPoint(p1, p2):
+#    return (p1[0] < p2[0]) or (p1[0] == p2[0] and p1[1] > p2[1])
