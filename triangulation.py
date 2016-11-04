@@ -195,6 +195,7 @@ class ConstructTriangulation(BaseForm):
         return self.AddPointToPencil(edge[0], edge[1]) and self.AddPointToPencil(edge[1], edge[0])
 
     def IsFictiveEdge(self, edge, breaker):
+        #draw.Edge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], "red", 7)
         [aNum, c1Num] = edge
         
         num1 = int(aNum >= len(self.points[0]))
@@ -216,6 +217,7 @@ class ConstructTriangulation(BaseForm):
         adc1 = geo.CountAngle(self.points[num][c1Num], self.points[num][dNum], self.points[num][aNum])
         ac2c1 = geo.CountAngle(self.points[num][aNum], self.points[num][c2Num], self.points[num][c1Num])
 
+        #print adc1, ac2c1, geo.PI / 2, geo.PI
         if (adc1 <= geo.PI / 2  or adc1 > geo.PI) and (ac2c1 <= geo.PI / 2 or ac2c1 > geo.PI):
             self.fictiveEdges.append([self.points[2][edge[0]], edge[1], breaker])
             
@@ -238,7 +240,8 @@ class ConstructTriangulation(BaseForm):
             abc1 = geo.CountAngle(c1, b, a)
             ac2c1 = geo.CountAngle(a, c2, c1)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
+            #print "del", "abc1", abc1, "ac2c1", ac2c1
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or (ac2c1 > geo.PI and abc1 < geo.PI):
                 break
             else:
                 self.IsFictiveEdge([aNum, c1Num], bNum)
@@ -260,7 +263,8 @@ class ConstructTriangulation(BaseForm):
             abc1 = geo.CountAngle(a, b, c1)
             ac2c1 = geo.CountAngle(c1, c2, a)
             
-            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or ac2c1 > geo.PI:
+            #print "del", "abc1", abc1, "ac2c1", ac2c1
+            if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or (ac2c1 > geo.PI and abc1 < geo.PI):
                 break
             else:
                 self.IsFictiveEdge([aNum, c1Num], bNum)
@@ -295,6 +299,8 @@ class ConstructTriangulation(BaseForm):
             
             acb = geo.CountAngle(a, c, b)
             adb = geo.CountAngle(a, d, b)
+
+            #print "acb", acb, "adb", adb
 
             if (cNum != bNum) and 0 < acb and acb < geo.PI and (acb > adb or adb >= geo.PI): # CB is edge
                 #draw.Edge(self.canvas, self.points[2][cNum], self.points[2][bNum], colorEdge, 2)
@@ -376,6 +382,8 @@ class ConstructTriangulation(BaseForm):
         used_starters = 0
         while(len(self.fictiveEdges)):
             starter = self.GetStarter()
+            #print starter
+            #draw.Edge(self.canvas, self.points[2][starter[0]], self.points[2][starter[1]], "purple", 10)
             all_starters += 1
 
             if self.AddEdgeToPencil(starter):
@@ -384,7 +392,7 @@ class ConstructTriangulation(BaseForm):
 
         fictiveTime = time() - start
 
-        draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
+        #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 3, 2)
         self.DrawStruct("black", 1)
         draw.AllPoints(self.canvas, self.points)
 
@@ -457,12 +465,8 @@ class ConstructTriangulation(BaseForm):
             #self.points[1] = [[544, 21], [336, 5], [427, 108], [226, 141], [110, 27]]
 
             # error Nooooooo
-            #self.points[0] = [[119, 331], [413, 268], [387, 32], [276, 225], [42, 303]]
-            #self.points[1] = [[42, 144], [360, 134], [163, 272], [167, 252], [239, 233]]
-
-            # hz cho za oshibka
-            self.points[0] = [[265, 9], [456, 9], [523, 87], [105, 331], [85, 89]]
-            self.points[1] = [[464, 326], [546, 48], [245, 241], [382, 9], [540, 211]]
+            self.points[0] = [[119, 331], [413, 268], [387, 32], [276, 225], [42, 303]]
+            self.points[1] = [[42, 144], [360, 134], [163, 272], [167, 252], [239, 233]]
 
         else:
             n = 10
