@@ -22,6 +22,7 @@ class ConstructTriangulation(BaseForm):
     answer = []
 
     # data for detecting next starter
+    IsVerticalFirst = False
     neighbors = [[], [], []]
     fictiveEdges = []
     
@@ -40,6 +41,7 @@ class ConstructTriangulation(BaseForm):
         self.neighFaces = [[], [], []]
         self.answer = []
 
+        self.IsVerticalFirst = False
         self.neighbors = [[], [], []]
         self.fictiveEdges = []
         
@@ -157,8 +159,10 @@ class ConstructTriangulation(BaseForm):
                     res = test
             leftNum[i] = resNum
             left[i] = res
-        
+
         leftNum[1] += len(self.points[0])
+        if left[0][0] == left[1][0]:
+            self.IsVerticalFirst = True
         
         if geo.LeftPoint(left[0], left[1]):
             [breakerNum, openNum] = leftNum
@@ -192,18 +196,19 @@ class ConstructTriangulation(BaseForm):
         return True
         
     def AddEdgeToPencil(self, edge):
+        draw.Edge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], "purple", 2)
+        raw_input()
         return self.AddPointToPencil(edge[0], edge[1]) and self.AddPointToPencil(edge[1], edge[0])
 
     def IsFictiveEdge(self, edge, breaker):
-        #draw.Edge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], "red", 7)
         [aNum, c1Num] = edge
         
         num1 = int(aNum >= len(self.points[0]))
         num2 = int(c1Num >= len(self.points[0]))
         
         if num1 != num2:
-            print "Noooooooooooooo"
-            return
+            draw.Edge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], "red", 2)
+            Exception("Noooooooooooooo")
         num = num1
         
         aNum -= num * len(self.points[0])
@@ -333,6 +338,9 @@ class ConstructTriangulation(BaseForm):
             self.SewTriangles([starter[1], starter[0]], 1, "blue")
 
     def GetStarterEnd(self, breakerNum, bridgeLine, radiusBridge, center, open):
+        if self.IsVerticalFirst:
+            return breakerNum
+
         num = int(breakerNum >= len(self.points[0]))
         shift = num * len(self.points[0])
         checkPoints = Queue.Queue()
@@ -372,9 +380,11 @@ class ConstructTriangulation(BaseForm):
         bridgeRadius = geo.GetLength(open, center)
 
         starterEndNum = self.GetStarterEnd(breakerNum, bridgeLine, bridgeRadius, center, open)
+        self.isFirstStarter = False
         return [openNum, starterEndNum]
 
     def MergeTriangles(self):
+        draw.AllPoints(self.canvas, self.points)
         start = time()
         self.SetLeft()
         
@@ -382,8 +392,6 @@ class ConstructTriangulation(BaseForm):
         used_starters = 0
         while(len(self.fictiveEdges)):
             starter = self.GetStarter()
-            #print starter
-            #draw.Edge(self.canvas, self.points[2][starter[0]], self.points[2][starter[1]], "purple", 10)
             all_starters += 1
 
             if self.AddEdgeToPencil(starter):
@@ -460,19 +468,22 @@ class ConstructTriangulation(BaseForm):
             #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
             #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
-            # error: not in list
-            #self.points[0] = [[203, 184], [584, 23], [109, 40], [312, 39], [558, 314]]
-            #self.points[1] = [[544, 21], [336, 5], [427, 108], [226, 141], [110, 27]]
-
-            # error Nooooooo
-            self.points[0] = [[119, 331], [413, 268], [387, 32], [276, 225], [42, 303]]
-            self.points[1] = [[42, 144], [360, 134], [163, 272], [167, 252], [239, 233]]
+            # Noooooo
+            self.points[0] = [[365, 336], [76, 302], [288, 55], [264, 86], [366, 184]]
+            self.points[1] = [[76, 249], [194, 201], [168, 161], [136, 181], [333, 62]]
 
         else:
             n = 10
             self.GenerateData(n)
 
-        self.Run()
+        try:
+            self.Run()
+        except Exception as error:
+            print "!!! ERROR !!!"
+            print "self.points[0] =", self.points[0]
+            print "self.points[1] =", self.points[1]
+            print error
+            exit(1)
         
     def FindErrors(self):
         n = 10
