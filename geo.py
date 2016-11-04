@@ -73,18 +73,17 @@ def IntersectLines(line1, line2):
     y0 = (c2 * a1 - c1 * a2) / (-det)
     return [x0, y0]
 
-def RadiusByLineAndPoint(line, radius, center, openPoint, checkPoint):
-    [a, b, c] = LineParameters(openPoint, checkPoint)
+def GetCenter(p1, p2, src):
+    line = LineParameters(p1, p2)
 
-    midlePoint = [round((openPoint[0] + checkPoint[0]) / 2), round((openPoint[1] + checkPoint[1]) / 2)]
-    [pa, pb, pc] = PerpendicularParameters(midlePoint, [a, b, c])
+    midlePoint = [round((p1[0] + p2[0]) / 2), round((p1[1] + p2[1]) / 2)]
+    pline = PerpendicularParameters(midlePoint, line)
 
-    pIntersect = IntersectLines(line, [pa, pb, pc])
+    return IntersectLines(src, pline)
 
-    if GetLength(pIntersect, center) < radius :
-        return GetLength(pIntersect, checkPoint)
-    else :
-        return -1
-
+def GetRadius(line, open, check):
+    intersect = GetCenter(open, check, line)
+    return GetLength(intersect, check)
+    
 def LeftPoint(p1, p2):
     return (p1[0] < p2[0]) or (p1[0] == p2[0] and p1[1] > p2[1])

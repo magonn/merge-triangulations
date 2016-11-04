@@ -1,4 +1,4 @@
-data = load('res1.txt');
+data = load('res.txt');
 
 hold on;
 plot(data(:, 1), data(:, 3), 'color', rand(1, 3), 'lineWidth', 2);
