@@ -195,8 +195,9 @@ class ConstructTriangulation(BaseForm):
         self.neighbors[2][where].insert(aMin, pNum)
         return True
         
-    def AddEdgeToPencil(self, edge):
-        draw.Edge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], "purple", 2)
+    def AddEdgeToPencil(self, edge, col = "purple"): # TODO remove color
+        print edge
+        draw.Edge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], col, 2)
         raw_input()
         return self.AddPointToPencil(edge[0], edge[1]) and self.AddPointToPencil(edge[1], edge[0])
 
@@ -338,7 +339,13 @@ class ConstructTriangulation(BaseForm):
             self.SewTriangles([starter[1], starter[0]], 1, "blue")
 
     def GetStarterEnd(self, breakerNum, bridgeLine, radiusBridge, center, open):
+        print "starter"
+        draw.Circle(self.canvas, center, "blue", radiusBridge)
+        draw.Point(self.canvas, center, "green", 5)
+        draw.Point(self.canvas, self.points[2][breakerNum], "blue", 5)
+
         if self.IsVerticalFirst:
+            self.IsVerticalFirst = False
             return breakerNum
 
         num = int(breakerNum >= len(self.points[0]))
@@ -359,6 +366,7 @@ class ConstructTriangulation(BaseForm):
                 
                 p = self.points[num][pNum]
                 radius = geo.GetRadius(bridgeLine, open, p)
+                print radius, minRadius
 
                 if radius < minRadius:
                     minRadius = radius
@@ -387,14 +395,17 @@ class ConstructTriangulation(BaseForm):
         draw.AllPoints(self.canvas, self.points)
         start = time()
         self.SetLeft()
-        
+
+        draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 1, 2)
+        raw_input()
+
         all_starters = 0
         used_starters = 0
         while(len(self.fictiveEdges)):
             starter = self.GetStarter()
             all_starters += 1
 
-            if self.AddEdgeToPencil(starter):
+            if self.AddEdgeToPencil(starter, "red"):
                 used_starters += 1
                 self.SewTriangles(starter, 0, "#00CC33")
 
@@ -468,9 +479,9 @@ class ConstructTriangulation(BaseForm):
             #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
             #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
-            # Noooooo
-            self.points[0] = [[365, 336], [76, 302], [288, 55], [264, 86], [366, 184]]
-            self.points[1] = [[76, 249], [194, 201], [168, 161], [136, 181], [333, 62]]
+            # wrong out len
+            self.points[0] = [[463, 223], [33, 204], [321, 164], [42, 97], [522, 209]]
+            self.points[1] = [[474, 254], [96, 40], [232, 113], [438, 226], [278, 284]]
 
         else:
             n = 10
