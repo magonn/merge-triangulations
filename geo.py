@@ -2,7 +2,7 @@ import math
 
 EPS = 1e-4
 PI = math.pi
-MINDIST = 2
+MINDIST = 4
 
 def Sign(x):
     return int(math.copysign(1, x))

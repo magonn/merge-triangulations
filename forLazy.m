@@ -1,4 +1,4 @@
-data = load('res1.txt');
+data = load('good_res.txt');
 new = load('res.txt');
 
 hold on;

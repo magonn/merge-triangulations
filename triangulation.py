@@ -195,14 +195,15 @@ class ConstructTriangulation(BaseForm):
         self.neighbors[2][where].insert(aMin, pNum)
         return True
         
-    def AddEdgeToPencil(self, edge, col = "purple"): # TODO remove color
-        print edge
+    def AddEdgeToPencil(self, edge, col = "purple"):
         draw.Edge(self.canvas, self.points[2][edge[0]], self.points[2][edge[1]], col, 2)
-        raw_input()
+        #raw_input()
         return self.AddPointToPencil(edge[0], edge[1]) and self.AddPointToPencil(edge[1], edge[0])
 
     def IsFictiveEdge(self, edge, breaker):
         [aNum, c1Num] = edge
+        #print "del", edge
+        #raw_input()
         
         num1 = int(aNum >= len(self.points[0]))
         num2 = int(c1Num >= len(self.points[0]))
@@ -246,11 +247,20 @@ class ConstructTriangulation(BaseForm):
             abc1 = geo.CountAngle(c1, b, a)
             ac2c1 = geo.CountAngle(a, c2, c1)
             
-            #print "del", "abc1", abc1, "ac2c1", ac2c1
+            #draw.Point(self.canvas, c1, "black", 5)
+            #draw.Point(self.canvas, c2, "darkred", 5)
+            #draw.AllPoints(self.canvas, self.points)
+            #print aNum, c1Num, "abc1", abc1, "ac2c1", ac2c1
+            #print aNum, bNum, c1Num, c2Num
+            #raw_input()
+        
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or (ac2c1 > geo.PI and abc1 < geo.PI):
                 break
             else:
-                self.IsFictiveEdge([aNum, c1Num], bNum)
+                if self.GetColor(c1Num) == self.GetColor(c2Num) or abc1 > ac2c1 or ac2c1 > geo.PI:
+                    self.IsFictiveEdge([aNum, c1Num], bNum)
+                else:
+                    self.IsFictiveEdge([aNum, c1Num], c2Num)
 
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -268,12 +278,19 @@ class ConstructTriangulation(BaseForm):
                 
             abc1 = geo.CountAngle(a, b, c1)
             ac2c1 = geo.CountAngle(c1, c2, a)
-            
+
+            #print aNum, c1Num, "abc1", abc1, "ac2c1", ac2c1
+            #print aNum, bNum, c1Num, c2Num
+            #raw_input()
+        
             #print "del", "abc1", abc1, "ac2c1", ac2c1
             if abc1 + ac2c1 <= geo.PI or abc1 > geo.PI or (ac2c1 > geo.PI and abc1 < geo.PI):
                 break
             else:
-                self.IsFictiveEdge([aNum, c1Num], bNum)
+                if self.GetColor(c1Num) == self.GetColor(c2Num) or abc1 > ac2c1 or ac2c1 > geo.PI:
+                    self.IsFictiveEdge([aNum, c1Num], bNum)
+                else:
+                    self.IsFictiveEdge([aNum, c1Num], c2Num)
 
                 self.neighbors[2][aNum].remove(c1Num)
                 self.neighbors[2][c1Num].remove(aNum)
@@ -284,6 +301,9 @@ class ConstructTriangulation(BaseForm):
     def IsEdgeExists(self, e1, e2):
         return (e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] == e2[1] and e1[1] == e2[0])
 
+    def GetColor(self, pNum):
+        return pNum >= len(self.points[1])
+
     def SewTriangles(self, starter, reverse = 0, colorEdge = "purple"):
         [aNum, bNum] = starter
         a = self.points[2][aNum]
@@ -293,6 +313,7 @@ class ConstructTriangulation(BaseForm):
         #raw_input()
 
         while(1):
+            #print "sew", aNum, bNum
             self.DeleteFictiveEdges([aNum, bNum])
             
             idx1 = self.neighbors[2][aNum].index(bNum)
@@ -339,10 +360,9 @@ class ConstructTriangulation(BaseForm):
             self.SewTriangles([starter[1], starter[0]], 1, "blue")
 
     def GetStarterEnd(self, breakerNum, bridgeLine, radiusBridge, center, open):
-        print "starter"
-        draw.Circle(self.canvas, center, "blue", radiusBridge)
-        draw.Point(self.canvas, center, "green", 5)
-        draw.Point(self.canvas, self.points[2][breakerNum], "blue", 5)
+        #draw.Circle(self.canvas, center, "blue", radiusBridge)
+        #draw.Point(self.canvas, center, "green", 5)
+        #draw.Point(self.canvas, self.points[2][breakerNum], "blue", 5)
 
         if self.IsVerticalFirst:
             self.IsVerticalFirst = False
@@ -366,8 +386,7 @@ class ConstructTriangulation(BaseForm):
                 
                 p = self.points[num][pNum]
                 radius = geo.GetRadius(bridgeLine, open, p)
-                print radius, minRadius
-
+                
                 if radius < minRadius:
                     minRadius = radius
                     starterEndNum = pNum
@@ -381,6 +400,14 @@ class ConstructTriangulation(BaseForm):
     def GetStarter(self):
         [fix, openNum, breakerNum] = self.fictiveEdges.pop(0)
         
+        #self.canvas.delete("all")
+        #draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 1, 2)
+        #draw.Point(self.canvas, fix, "yellow", 5)
+        #draw.Point(self.canvas, self.points[2][breakerNum], "blue", 5)
+        #draw.Point(self.canvas, self.points[2][openNum], "red", 5)        
+        #draw.AllPoints(self.canvas, self.points)
+        #print "red", openNum, "yellow", fix
+
         open = self.points[2][openNum]
         center = [(open[0] + fix[0]) / 2, (open[1] + fix[1]) / 2]
         
@@ -397,7 +424,7 @@ class ConstructTriangulation(BaseForm):
         self.SetLeft()
 
         draw.Triangle(self.canvas, self.points[2], self.faces[2], "green", 1, 2)
-        raw_input()
+        #raw_input()
 
         all_starters = 0
         used_starters = 0
@@ -468,7 +495,7 @@ class ConstructTriangulation(BaseForm):
     def Experiment(self):
         self.Reset()
         
-        randomPoints = 0 # 0 - example, 1 - rand
+        randomPoints = 1 # 0 - example, 1 - rand
 
         if randomPoints == 0:
             # model example in report
@@ -479,12 +506,12 @@ class ConstructTriangulation(BaseForm):
             #self.points[0] = [[128, 187], [158, 124], [220, 146], [220, 202], [170, 236], [173, 191]]
             #self.points[1] = [[181, 157], [226, 113], [283, 118], [273, 199], [300, 236], [237, 251]]
 
-            # wrong out len
-            self.points[0] = [[463, 223], [33, 204], [321, 164], [42, 97], [522, 209]]
-            self.points[1] = [[474, 254], [96, 40], [232, 113], [438, 226], [278, 284]]
+            # wrong output len
+            self.points[0] = [[27, 79], [169, 79], [231, 107], [163, 132], [339, 63]]
+            self.points[1] = [[28, 83], [415, 326], [359, 279], [168, 32], [581, 136]]
 
         else:
-            n = 10
+            n = 10000
             self.GenerateData(n)
 
         try:
@@ -494,6 +521,7 @@ class ConstructTriangulation(BaseForm):
             print "self.points[0] =", self.points[0]
             print "self.points[1] =", self.points[1]
             print error
+            #raw_input()
             exit(1)
         
     def FindErrors(self):
